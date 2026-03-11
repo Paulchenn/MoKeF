@@ -1,0 +1,152 @@
+\chapter{Grundlagen}
+\label{ch:grundlagen}
+In diesem Kapitel werden die theoretischen Grundlagen vorgestellt, die für das Verständnis der in dieser Arbeit entwickelten Methode erforderlich sind. Dazu gehören die Prinzipien der bildbasierten Roboterregelung, Verfahren zur Erkennung und Verfolgung visueller Merkmale sowie grundlegende Filtermethoden zur Stabilisierung von Messdaten.
+
+Diese Konzepte bilden die Basis für die im weiteren Verlauf der Arbeit vorgestellte Architektur zur robusten Feature-basierten Robotersteuerung.
+
+\section{Bildbasierte Roborerregelung (IBVS)}
+\label{sec:BildbasierteRoborerregelung(IBVS)}
+
+Visual Servoing bezeichnet eine Klasse von Regelungsverfahren, bei denen visuelle Informationen aus Kamerabildern zur Steuerung eines Roboters verwendet werden. Ziel ist es, die Bewegung des Roboters so zu regeln, dass bestimmte visuelle Merkmale eine gewünschte Position im Kamerabild erreichen.
+
+Grundsätzlich lassen sich zwei Hauptansätze des Visual Servoing unterscheiden:
+\begin{itemize}
+	\item Position Based Visual Servoing (PBVS)
+	\item Image Based Visual Servoing (IBVS)
+\end{itemize}
+Beim Position Based Visual Servoing wird zunächst die vollständige Pose des Objekts im dreidimensionalen Raum geschätzt. Anschließend wird aus dieser Pose eine Roboterbewegung berechnet.
+
+Beim Image Based Visual Servoing hingegen erfolgt die Regelung direkt im Bildraum. Dabei werden Bildmerkmale wie Punkte, Linien oder Konturen als Referenzgrößen verwendet. Der Roboter wird so gesteuert, dass sich die Position dieser Merkmale im Kamerabild einer gewünschten Zielposition annähert.
+
+Der große Vorteil von IBVS besteht darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Dadurch kann das Verfahren oft robuster gegenüber Modellierungsfehlern sein.
+
+Der grundlegende Regelkreis von IBVS besteht aus folgenden Schritten:
+\begin{itemize}
+	\item Aufnahme eines Kamerabildes
+	\item Erkennung visueller Merkmale (Features)
+	\item Berechnung des Bildfehlers zwischen aktueller und gewünschter Featureposition
+	\item Berechnung einer Roboterbewegung zur Minimierung dieses Fehlers
+\end{itemize}
+Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Position eines Features im Bild und seiner gewünschten Zielposition definiert.
+
+\section{Interaction Matrix und Image Jacobian}
+\label{sec:InteractionMatrixundImageJacobian}
+Ein zentrales Element von IBVS ist die sogenannte Interaction Matrix, auch als Image Jacobian bezeichnet. Diese Matrix beschreibt den Zusammenhang zwischen der Bewegung der Kamera und der Veränderung der Bildmerkmale.
+
+Die Interaction Matrix stellt eine lineare Beziehung zwischen der Geschwindigkeit der Kamera und der zeitlichen Änderung der Featurepositionen im Bild her.
+
+Mathematisch kann dieser Zusammenhang wie folgt beschrieben werden:
+
+\begin{equation}
+\dot{s} = L_s \cdot v
+\end{equation}
+
+
+
+Dabei gilt:
+\begin{itemize}
+	\item $\dot{s}$ : zeitliche Änderung der Bildfeatures
+	\item $L_s$ : Interaction Matrix
+	\item $v$ : Geschwindigkeitsvektor der Kamera
+\end{itemize}
+
+
+
+
+Der Geschwindigkeitsvektor enthält sowohl translatorische als auch rotatorische Bewegungen der Kamera.
+
+Die Interaction Matrix hängt von mehreren Faktoren ab:
+
+\begin{itemize}
+	\item der aktuellen Position der Features im Bild
+	\item der Tiefe der Features im Raum
+	\item den Kameraparametern
+\end{itemize}
+
+Um den Roboter zu steuern, wird üblicherweise eine Pseudoinverse der Interaction Matrix verwendet. Der typische IBVS-Regler lautet:
+\begin{equation}
+v = -\lambda \cdot L_s \cdot (s - s*)
+\end{equation}
+
+Dabei gilt:
+\begin{itemize}
+	\item $s$ : aktuelle Featureposition
+	\item $s_str$ : gewünschte Featureposition
+	\item $\lambda$ : Regelverstärkung
+	\item $L_s$ : Pseudoinverse der Interaction Matrix
+\end{itemize}
+
+Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, bis die Features ihre gewünschte Position erreicht haben.
+
+\section{Keypoint Detection und Feature Matching}
+\label{sec:KeypointDetectionundFeatureMatching}
+Damit ein IBVS-System arbeiten kann, müssen zunächst stabile Bildmerkmale im Kamerabild erkannt werden. Diese Merkmale werden häufig als Keypoints oder Features bezeichnet.
+
+Keypoints sind charakteristische Bildpunkte, die sich zuverlässig wiedererkennen lassen. Beispiele hierfür sind:
+\begin{itemize}
+	\item Ecken
+	\item Kantenübergänge
+	\item markante Texturpunkte
+\end{itemize}
+
+Moderne Feature-Detektionsverfahren berechnen zusätzlich sogenannte Deskriptoren, die die lokale Bildstruktur um einen Keypoint beschreiben. Diese Deskriptoren ermöglichen es, Features zwischen verschiedenen Bildern wiederzuerkennen.
+
+Bekannte klassische Feature-Verfahren sind beispielsweise:
+\begin{itemize}
+	\item SIFT
+	\item SURF
+	\item ORB
+\end{itemize}
+
+Neben klassischen Verfahren existieren auch neuere Ansätze auf Basis neuronaler Netze, die häufig robustere Features liefern können. Ein Beispiel hierfür ist der Feature-Detektor xFeat, der speziell für robuste Feature-Erkennung entwickelt wurde.
+
+Beim Feature Matching werden Deskriptoren miteinander verglichen, um zu bestimmen, welche Features in zwei Bildern zueinander gehören. Eine häufig verwendete Ähnlichkeitsmetrik ist die Cosinus-Ähnlichkeit oder die euklidische Distanz zwischen den Deskriptorvektoren.
+
+Eine zuverlässige Feature-Erkennung ist eine zentrale Voraussetzung für stabile Visual-Servoing-Systeme.
+
+
+\section{Probleme bei Reflexion und Okklusion}
+\label{sec:ProblemebeiReflexionundOkklusion}
+In realen Anwendungen können verschiedene Effekte die Erkennung von Bildmerkmalen erschweren. Besonders problematisch sind reflektierende Oberflächen, da diese zu starken Helligkeitsunterschieden im Bild führen können.
+
+Reflexionen können dazu führen, dass:
+\begin{itemize}
+	\item Bildbereiche überbelichtet erscheinen
+	\item lokale Bildstrukturen verschwinden
+	\item neue, nicht stabile Keypoints entstehen
+\end{itemize}
+
+Ein weiteres Problem stellt die Okklusion dar. Dabei werden Teile des Objekts temporär verdeckt, beispielsweise durch Werkzeuge, Greifer oder andere Objekte in der Szene.
+
+In beiden Fällen kann es passieren, dass zuvor erkannte Keypoints im Bild nicht mehr gefunden werden. Für IBVS-Systeme ist dies problematisch, da die Berechnung des Bildfehlers direkt von der Verfügbarkeit dieser Features abhängt.
+
+Daher werden in vielen modernen Visual-Servoing-Systemen zusätzliche Strategien eingesetzt, um den Verlust von Features zu kompensieren. Dazu gehören beispielsweise modellbasierte Vorhersagen oder Filtermethoden zur Stabilisierung der Featurepositionen.
+
+\section{Zustandsmodelle für visuelle Features}
+\label{sec:ZustandsmodellefürvisuelleFeatures}
+Um temporäre Ausfälle von Bildmerkmalen zu kompensieren, können Zustandsmodelle verwendet werden. Ein Zustandsmodell beschreibt die erwartete Entwicklung eines Systems über die Zeit.
+
+Im Kontext von Visual Servoing kann ein solches Modell verwendet werden, um die zukünftige Position eines Features im Bild vorherzusagen. Grundlage dafür ist häufig die bekannte Bewegung des Roboters oder der Kamera.
+
+Ein einfaches Beispiel ist ein Bewegungsmodell, das davon ausgeht, dass sich ein Feature mit konstanter Geschwindigkeit bewegt. In diesem Fall kann die zukünftige Featureposition aus der aktuellen Position und der geschätzten Geschwindigkeit berechnet werden.
+
+Komplexere Modelle können zusätzlich Informationen über die Roboterkinematik oder geometrische Transformationen zwischen verschiedenen Kamerapositionen berücksichtigen.
+
+Solche Modelle ermöglichen es, auch dann eine Schätzung der Featureposition zu erhalten, wenn ein Feature im aktuellen Bild nicht direkt erkannt werden kann.
+
+\section{Filtermethoden}
+\label{sec:Filtermethoden}
+Messdaten aus Kamerasystemen enthalten häufig Rauschen oder Ausreißer. Daher werden in vielen Anwendungen Filter eingesetzt, um Messwerte zu glätten und stabilere Schätzungen zu erhalten.
+
+Ein häufig verwendeter Ansatz ist der Kalman-Filter. Dieser kombiniert ein Zustandsmodell mit Messdaten, um eine optimale Schätzung des aktuellen Systemzustands zu berechnen. Dabei werden sowohl Unsicherheiten im Modell als auch im Messprozess berücksichtigt.
+
+Der Kalman-Filter besteht aus zwei Hauptschritten:
+\begin{itemize}
+	\item Vorhersage des nächsten Zustands anhand des Bewegungsmodells
+	\item Korrektur dieser Vorhersage mithilfe der aktuellen Messung
+\end{itemize}
+
+Eine einfachere Alternative ist der sogenannte 1€-Filter. Dieser Filter ist speziell für interaktive Systeme entwickelt worden und kombiniert eine einfache Glättung mit einer adaptiven Filterfrequenz. Dadurch kann er sowohl schnelle Bewegungen als auch kleine Messschwankungen effizient behandeln.
+
+Filtermethoden spielen eine wichtige Rolle bei der Stabilisierung von Featurepositionen im Bildraum und tragen dazu bei, den Regelkreis von Visual-Servoing-Systemen robuster zu machen.
+%% End of File %%

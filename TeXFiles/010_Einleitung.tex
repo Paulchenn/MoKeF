@@ -1,2 +1,70 @@
 \chapter{Einleitung}
 \label{ch:einleitung}
+
+\section{Motivation}
+\label{sec:Motivation}
+In der industriellen Robotik spielt die präzise und flexible Positionierung von Werkzeugen oder Greifern eine zentrale Rolle. Klassische Automatisierungssysteme basieren häufig auf festen Programmen oder vorab definierten Positionen im Raum. Diese Ansätze stoßen jedoch an ihre Grenzen, sobald sich Umgebungsbedingungen ändern oder Objekte nicht exakt an der erwarteten Position liegen.
+Eine vielversprechende Lösung stellt die visuelle Roboterführung dar. Dabei wird ein Kamerasystem genutzt, um visuelle Informationen aus der Umgebung zu erfassen und diese direkt in den Regelkreis des Roboters einzubeziehen. Ein besonders verbreiteter Ansatz ist Image Based Visual Servoing (\ac{IBVS}). Hierbei wird die Bewegung des Roboters so geregelt, dass bestimmte Bildmerkmale – sogenannte Features oder Keypoints – im Kamerabild eine gewünschte Zielposition erreichen.
+Der Vorteil dieses Ansatzes liegt darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Stattdessen wird die Roboterbewegung direkt aus der Veränderung der Bildmerkmale berechnet. Dadurch können viele Aufgaben mit vergleichsweise geringer Modellierung der Umgebung gelöst werden.
+In realen industriellen Anwendungen treten jedoch häufig Probleme auf, die die Zuverlässigkeit der Feature-Erkennung beeinträchtigen. Besonders bei metallischen oder glänzenden Bauteilen kommt es durch starke Reflexionen, Überbelichtung oder ungünstige Beleuchtung zu instabilen Bildmerkmalen. Keypoints können temporär verschwinden, falsch erkannt werden oder ihre Position stark verändern. Dadurch wird der Regelkreis instabil oder verliert vollständig seine Referenzpunkte.
+Diese Problematik stellt eine zentrale Herausforderung für den praktischen Einsatz von IBVS in industriellen Umgebungen dar.
+
+
+\section{Problemstellung}
+\label{sec:Problemstellung}
+Das grundlegende Problem bei der Verwendung von bildbasierten Merkmalen zur Robotersteuerung besteht darin, dass die Stabilität des Regelkreises direkt von der Zuverlässigkeit der Feature-Erkennung abhängt. Sobald relevante Keypoints nicht mehr korrekt erkannt werden können, entstehen Fehler in der Berechnung der Bildfehler und damit in den Steuerbefehlen des Roboters.
+In industriellen Szenarien treten mehrere Störeinflüsse auf:
+\begin{itemize}
+	\item starke Reflexionen auf metallischen Oberflächen
+	\item Überbelichtung einzelner Bildbereiche
+	\item temporäre Okklusion durch Greifer oder Werkzeuge
+	\item Veränderungen der Beleuchtung
+	\item perspektivische Änderungen während der Roboterbewegung
+\end{itemize}
+
+Diese Effekte können dazu führen, dass zuvor zuverlässig erkannte Bildmerkmale plötzlich verschwinden oder falsch zugeordnet werden. Klassische Feature-Tracking-Methoden sind häufig nicht in der Lage, solche Situationen robust zu behandeln.
+Ein weiteres Problem besteht darin, dass viele IBVS-Systeme ausschließlich auf den aktuell erkannten Bildmerkmalen basieren. Sobald diese Merkmale nicht mehr verfügbar sind, kann der Regelkreis keine stabilen Steuergrößen mehr berechnen.
+Daher besteht die zentrale Herausforderung darin, ein System zu entwickeln, das auch bei temporär fehlenden oder unzuverlässigen Keypoints weiterhin stabile Positionsinformationen bereitstellen kann.
+
+\section{Herausforderung bei reflektierenden Objekten}
+\label{sec:HerausforderungbeireflektierendenObjekten}
+Reflektierende Oberflächen stellen in der industriellen Bildverarbeitung eine besondere Schwierigkeit dar. Metallische Bauteile oder polierte Oberflächen reflektieren Licht häufig sehr stark und können dadurch lokale Überbelichtungen im Kamerabild verursachen. Diese Effekte führen zu sogenannten Specular Highlights, bei denen einzelne Bildbereiche deutlich heller erscheinen als ihre Umgebung.
+Für viele Feature-Detektionsalgorithmen stellt dies ein Problem dar, da sich die lokalen Bildstrukturen stark verändern können. Ein Keypoint, der unter normalen Beleuchtungsbedingungen zuverlässig erkannt wird, kann unter Reflexion plötzlich verschwinden oder stark verschoben erscheinen.
+Zusätzlich verändert sich das Erscheinungsbild reflektierender Oberflächen stark in Abhängigkeit vom Blickwinkel der Kamera. Bereits kleine Bewegungen des Roboters können dazu führen, dass sich Reflexionen im Bild verschieben oder neue Reflexionspunkte entstehen.
+Diese Effekte erschweren sowohl die stabile Feature-Erkennung als auch das anschließende Feature-Tracking. In der Folge kann es zu folgenden Problemen kommen:
+\begin{itemize}
+	\item Verlust von Keypoints während der Bewegung
+	\item falsche Zuordnung von Features
+	\item instabile Bildfehler im Regelkreis
+	\item Veränderungen der Beleuchtung
+	\item unruhige oder falsche Roboterbewegungen
+\end{itemize}
+
+In vielen industriellen Anwendungen ist es jedoch nicht möglich, die Beleuchtungsbedingungen vollständig zu kontrollieren oder die Oberflächen der Bauteile zu verändern. Daher ist es notwendig, Methoden zu entwickeln, die auch unter solchen Bedingungen zuverlässig arbeiten.
+
+\section{Ziel des Projekts}
+\label{sec:ZieldesProjekts}
+Ziel dieses Projekts ist die Entwicklung eines robusten Systems zur Stabilisierung von Image Based Visual Servoing unter schwierigen Bildbedingungen. Insbesondere soll ein Ansatz entwickelt werden, der reale Bildfeatures mit modellbasierten Vorhersagen kombiniert.
+Die zentrale Idee besteht darin, zusätzlich zu den tatsächlich im Kamerabild erkannten Keypoints eine modellbasierte Vorhersage der erwarteten Featurepositionen zu berechnen. Diese Vorhersage kann auf Grundlage der bekannten Roboterkinematik sowie eines mathematischen Bewegungsmodells erfolgen.
+Das System nutzt somit zwei Informationsquellen:
+\begin{itemize}
+	\item reale Keypoints aus dem Kamerabild
+	\item modellierte Keypoints aus der Bewegung des Roboters
+\end{itemize}
+
+Durch die Kombination beider Informationsquellen kann das System auch dann stabile Positionsinformationen liefern, wenn reale Features temporär nicht erkannt werden.
+Zusätzlich wird eine Filter- und Entscheidungslogik entwickelt, die die Qualität der verfügbaren Keypoints bewertet und dynamisch entscheidet, welche Features für die Regelung verwendet werden sollen.
+
+\section{Beitrag der Arbeit}
+\label{sec:BeitragderArbeit}
+Der Beitrag dieser Arbeit besteht in der Entwicklung eines hybriden Ansatzes zur Stabilisierung von Feature-basierten Roboterregelungen in visuellen Servoing-Systemen.
+Die wesentlichen Beiträge lassen sich wie folgt zusammenfassen:
+\begin{itemize}
+	\item Entwicklung einer Architektur zur Kombination von realen und modellierten Keypoints
+	\item Aufbau einer lokalen Keypoint-Datenbank zur Speicherung von Featureinformationen
+	\item Integration eines Filters zur Bewertung der Featurequalität
+	\item Entwicklung einer Entscheidungsstrategie zur dynamischen Auswahl stabiler Features
+	\item Implementierung eines modularen Systems zur Integration in eine ROS2-basierte Robotiksoftware
+\end{itemize}
+
+%% End of File %%
