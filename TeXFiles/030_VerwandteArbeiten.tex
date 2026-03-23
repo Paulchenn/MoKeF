@@ -1,7 +1,59 @@
 \chapter{Verwandte Arbeiten}
-\label{ch:VerwandteArbeiten}
+\label{chap:verwandte_arbeiten}
 
-\section{Klassisches Feature Tracking}
-\label{sec:KlassischesFeatureTracking}
+In diesem Kapitel werden relevante Arbeiten aus den Bereichen Visual Servoing, Feature Detection und modellbasierter Bildverarbeitung vorgestellt. Ziel ist es, den aktuellen Stand der Forschung darzustellen und bestehende Ansätze im Kontext der in dieser Arbeit behandelten Problemstellung einzuordnen. Darüber hinaus werden die Grenzen bestehender Methoden aufgezeigt, um die Motivation für den in dieser Arbeit vorgeschlagenen Ansatz zu verdeutlichen.
 
+\section{Image-Based Visual Servoing}
+\label{sec:ibvs_related}
+
+Image-Based Visual Servoing (IBVS) ist ein etabliertes Verfahren zur visuellen Regelung von Robotersystemen. Dabei werden Bildmerkmale direkt im Bildraum verwendet, um die Bewegung des Roboters zu steuern. Die grundlegende Idee besteht darin, die Differenz zwischen der aktuellen Position von Bildmerkmalen und einer gewünschten Zielposition zu minimieren \cite{hager1996tutorial, chaumette2006visual1, chaumette2007visual2}.
+
+Die grundlegenden Konzepte von IBVS wurden insbesondere von Chaumette und Hutchinson systematisch beschrieben. Dabei wird der Zusammenhang zwischen der Bewegung der Kamera und der Veränderung der Bildmerkmale mithilfe der sogenannten \textit{Interaction Matrix} modelliert \cite{chaumette2006visual1, chaumette2007visual2}. Ein wesentlicher Vorteil von IBVS besteht darin, dass keine vollständige Rekonstruktion der dreidimensionalen Szene erforderlich ist. Dadurch kann das Verfahren in vielen Fällen robuster gegenüber Kalibrierungs- und Modellierungsfehlern sein als posebasierte Ansätze \cite{hager1996tutorial, chaumette2006visual1}.
+
+Gleichzeitig weist IBVS jedoch auch Einschränkungen auf. Insbesondere hängt die Stabilität des Regelkreises stark von der zuverlässigen Erkennung und Verfolgung visueller Merkmale ab. Sobald relevante Features verloren gehen oder falsch erkannt werden, kann dies zu instabilen Steuerbefehlen oder zum vollständigen Verlust der Regelung führen \cite{chaumette2006visual1, chaumette2007visual2}. Diese Problematik wird insbesondere in realen Anwendungen mit schwierigen Bildbedingungen deutlich.
+
+\section{Feature Detection und Feature Matching}
+\label{sec:feature_detection_matching}
+
+Die zuverlässige Erkennung von Bildmerkmalen stellt eine zentrale Voraussetzung für viele visuelle Roboterregelungssysteme dar. In der Computer Vision wurden zahlreiche Verfahren zur Detektion und Beschreibung lokaler Bildmerkmale entwickelt. Zu den bekanntesten klassischen Verfahren zählt der \textit{Scale-Invariant Feature Transform} (SIFT), der robuste Keypoints und zugehörige Deskriptoren extrahiert, die weitgehend invariant gegenüber Skalierung und Rotation sind \cite{lowe2004sift}. Weitere häufig verwendete Verfahren sind SURF sowie ORB, das insbesondere für effiziente Anwendungen in Echtzeitsystemen entwickelt wurde \cite{bay2006surf, rublee2011orb}.
+
+Diese Verfahren extrahieren charakteristische Bildpunkte und berechnen zugehörige Deskriptorvektoren, die eine Wiedererkennung der Features in verschiedenen Bildern ermöglichen. Das Feature Matching erfolgt anschließend typischerweise über den Vergleich dieser Deskriptoren mithilfe geeigneter Distanzmetriken und zusätzlicher geometrischer Konsistenzprüfungen \cite{lowe2004sift, rublee2011orb}.
+
+Trotz ihrer weiten Verbreitung stoßen klassische Feature-Verfahren in bestimmten Situationen an ihre Grenzen. Insbesondere bei starken Beleuchtungsänderungen, Reflexionen oder temporären Okklusionen kann es zu instabilen Feature-Erkennungen kommen. In solchen Fällen können zuvor erkannte Keypoints im nächsten Bild nicht mehr zuverlässig identifiziert werden. Diese Problematik ist besonders kritisch in Anwendungen der visuellen Regelung, da die Stabilität des Regelkreises direkt von der Verfügbarkeit der Bildmerkmale abhängt.
+
+\section{Modellbasierte Visual-Servoing-Ansätze}
+\label{sec:model_based_vs}
+
+Neben rein bildbasierten Verfahren existieren auch modellbasierte Ansätze im Bereich des Visual Servoing. Diese Methoden nutzen zusätzliche Informationen über die Geometrie der Szene oder über die Kinematik des Robotersystems, um die Position visueller Merkmale vorherzusagen oder die Pose eines Objekts robuster zu schätzen \cite{marchand2002virtual, comport2006real, marchand2016pose}.
+
+Bei modellbasierten Verfahren wird häufig ein geometrisches Modell des beobachteten Objekts oder der Umgebung verwendet. Auf Grundlage dieses Modells können erwartete Featurepositionen oder Reprojektionen berechnet werden, die anschließend mit den tatsächlich beobachteten Bildmerkmalen verglichen werden \cite{marchand2002virtual, comport2006real}. Solche Ansätze können insbesondere dann vorteilhaft sein, wenn Bildmerkmale temporär nicht zuverlässig erkannt werden können. Durch die Nutzung eines Modells lassen sich fehlende oder verrauschte Informationen zumindest teilweise kompensieren.
+
+Allerdings erfordern viele modellbasierte Visual-Servoing-Methoden eine genaue Kenntnis der Geometrie der Szene oder des beobachteten Objekts. In industriellen Anwendungen ist diese Information nicht immer vollständig verfügbar oder kann nur mit hohem Aufwand bestimmt werden. Zudem können Modellfehler die Genauigkeit der Vorhersagen beeinträchtigen \cite{marchand2016pose}. Daher besteht ein zunehmendes Interesse an hybriden Ansätzen, die sowohl reale Bildinformationen als auch modellbasierte Vorhersagen kombinieren.
+
+\section{Deep-Learning-basierte Feature-Methoden}
+\label{sec:dl_feature_methods}
+
+In den letzten Jahren wurden zahlreiche Methoden entwickelt, die Deep Learning zur Erkennung und Beschreibung visueller Merkmale einsetzen. Diese Ansätze zielen darauf ab, robustere Features zu erzeugen, die besser mit schwierigen Bildbedingungen umgehen können.
+
+Ein bekanntes Beispiel ist SuperPoint, ein neuronales Netzwerk zur gleichzeitigen Detektion und Beschreibung von Keypoints \cite{detone2018superpoint}. Darauf aufbauend wurde mit SuperGlue ein lernbasierter Feature-Matcher entwickelt, der Graph Neural Networks verwendet, um korrespondierende Features zwischen Bildern zu bestimmen \cite{sarlin2020superglue}. Weitere Ansätze wie R2D2 konzentrieren sich darauf, besonders wiederholbare und zuverlässige Keypoints zu generieren \cite{revaud2019r2d2}. Neuere Arbeiten wie XFeat adressieren zusätzlich die effiziente Extraktion und Zuordnung lokaler Merkmale für ressourcenbeschränkte Systeme und Echtzeitanwendungen \cite{potje2024xfeat}.
+
+Deep-Learning-basierte Feature-Methoden zeigen häufig eine höhere Robustheit gegenüber Bildrauschen, moderaten Beleuchtungsänderungen und komplexeren Bildstrukturen als klassische handentwickelte Verfahren \cite{detone2018superpoint, sarlin2020superglue, revaud2019r2d2}. Dennoch können auch diese Methoden Schwierigkeiten bei starken Reflexionen, Überbelichtungen oder Okklusionen haben, da die zugrunde liegenden Bildinformationen in solchen Situationen stark verändert oder lokal vollständig verdeckt werden.
+
+\section{Limitierungen bestehender Ansätze}
+\label{sec:limitations_existing_work}
+
+Die betrachteten Arbeiten zeigen, dass sowohl klassische als auch moderne Methoden zur Feature-Erkennung und visuellen Regelung charakteristische Einschränkungen aufweisen. Rein bildbasierte Visual-Servoing-Systeme sind stark von der stabilen Erkennung visueller Merkmale abhängig. Sobald Features im Bild verloren gehen oder falsch erkannt werden, kann dies zu instabilen Regelbewegungen führen \cite{chaumette2006visual1, chaumette2007visual2}.
+
+Modellbasierte Ansätze können fehlende Bildinformationen zwar teilweise kompensieren, setzen jedoch häufig eine genaue Kenntnis der Szene oder des beobachteten Objekts voraus. In realen industriellen Anwendungen ist diese Information nicht immer vollständig verfügbar oder kann sich im Laufe der Zeit verändern \cite{marchand2016pose}. Auch moderne Deep-Learning-basierte Feature-Methoden sind nicht vollständig robust gegenüber starken Reflexionen oder Überbelichtungen, da diese Effekte die zugrunde liegenden Bildstrukturen stark verändern können.
+
+Diese Einschränkungen verdeutlichen, dass ein Bedarf an Methoden besteht, die sowohl reale Bildinformationen als auch modellbasierte Vorhersagen kombinieren, um eine stabilere Featureverfolgung und damit eine robustere visuelle Regelung zu ermöglichen.
+
+\section{Abgrenzung der eigenen Arbeit}
+\label{sec:own_contribution_delimitation}
+
+Die in dieser Arbeit vorgestellte Methode verfolgt einen hybriden Ansatz, der sowohl reale Bildmerkmale als auch modellbasierte Vorhersagen berücksichtigt. Ziel ist es, die Stabilität von featurebasierten Visual-Servoing-Systemen in Situationen zu verbessern, in denen Bildmerkmale temporär nicht zuverlässig erkannt werden können.
+
+Im Gegensatz zu rein bildbasierten Verfahren werden zusätzlich modellierte Keypoints berechnet, die auf der bekannten Bewegung des Roboters sowie einem mathematischen Zustandsmodell basieren. Diese modellierten Features können als Ersatz oder Ergänzung zu realen Bildmerkmalen dienen, wenn die Erkennung im Kamerabild unsicher ist.
+
+Darüber hinaus wird eine Filter- und Entscheidungslogik eingesetzt, die die Qualität der verfügbaren Features bewertet und dynamisch entscheidet, welche Informationen für die Regelung verwendet werden sollen. Durch die Kombination von realer Bildverarbeitung, modellbasierter Vorhersage und Filtermethoden soll eine robustere visuelle Roboterregelung erreicht werden, die auch unter schwierigen Bildbedingungen stabil arbeitet.
 %% End of File %%

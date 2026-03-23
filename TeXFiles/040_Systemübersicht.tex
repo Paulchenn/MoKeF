@@ -1,8 +1,173 @@
-\chapter{Systemübersicht}
-\label{ch:systemübersicht}
+\chapter{Systemarchitektur und Methode}
+\label{chap:systemarchitektur_methode}
 
-\section{Gesamtarchitektur des Systems}
-\label{sec:GesamtarchitekturdesSystems}
+Dieses Kapitel beschreibt die Architektur des entwickelten Systems zur bildbasierten Roboterregelung. Ziel des Systems ist es, einen modularen \textit{Image-Based Visual Servoing} (IBVS)-Stack zu implementieren, der es ermöglicht, einen UR5e-Roboter mithilfe visueller Merkmale aus einer Kamerabeobachtung zu steuern. Das System basiert auf einer modularen Architektur, bei der einzelne Komponenten wie Feature-Erkennung, Referenzmodellbildung, Matching, Filterung und Regelung unabhängig voneinander entwickelt und ausgetauscht werden können. Diese Struktur ermöglicht eine flexible Erweiterung des Systems sowie die einfache Integration alternativer Verfahren. Die gesamte Pipeline ist in mehrere ROS2-Pakete aufgeteilt und wird in einer containerisierten Umgebung betrieben, wodurch eine reproduzierbare und klar strukturierte Systemarchitektur entsteht \cite{ros2_nodes, ros2_topics}.
 
+\section{Systemübersicht}
+\label{sec:systemuebersicht}
+
+Das entwickelte System implementiert eine vollständige Pipeline für \textit{Image-Based Visual Servoing}. Die Pipeline beginnt mit der Aufnahme eines Kamerabildes, aus dem visuelle Merkmale extrahiert werden. Anschließend werden diese Merkmale mit einem zuvor erzeugten Referenzdatensatz verglichen, um korrespondierende Bildpunkte zu bestimmen. Auf Grundlage dieser Feature-Korrespondenzen wird ein Bildfehler berechnet, der schließlich in eine Roboterbewegung umgewandelt wird.
+
+Ein zentrales Ziel der Architektur besteht darin, ein stabiles Referenzmodell aus mehreren Beobachtungen aufzubauen, anstatt sich auf eine einzelne Bildaufnahme zu verlassen. Dadurch kann die Robustheit der Feature-Erkennung erhöht werden. Die gesamte IBVS-Pipeline besteht aus den folgenden Hauptschritten:
+
+\begin{enumerate}
+	\item Aufnahme eines RGB-Kamerabildes durch die RealSense-Kamera
+	\item Erkennung von Keypoints und Deskriptoren mit einem Feature-Detektor
+	\item Aufbau eines stabilen Referenzdatensatzes aus mehreren Frames
+	\item Matching der aktuellen Bildfeatures mit den Referenzfeatures
+	\item Filterung und Validierung der Feature-Korrespondenzen
+	\item Berechnung des Bildfehlers
+	\item Berechnung einer kartesischen Geschwindigkeitssteuerung für den Roboter
+\end{enumerate}
+
+Die resultierende Steuergröße wird anschließend als kartesischer \textit{Twist}-Befehl an den Robotercontroller gesendet. Die Systemarchitektur ist bewusst modular gestaltet. Dadurch können einzelne Komponenten, wie der Feature-Detektor oder das Matching-Verfahren, unabhängig voneinander ausgetauscht werden, ohne dass die übrigen Komponenten angepasst werden müssen.
+
+\section{Hardwareaufbau}
+\label{sec:hardwareaufbau}
+
+Das System besteht aus zwei zentralen Hardwarekomponenten: einer RGB-D-Kamera zur visuellen Wahrnehmung der Umgebung sowie einem industriellen Robotersystem zur Ausführung der Bewegungen.
+
+\subsection{Kamerasystem: Intel RealSense D435}
+\label{subsec:realsense_d435}
+
+Als Kamerasystem wird eine Intel RealSense D435 verwendet. Diese Kamera stellt sowohl RGB- als auch Tiefeninformationen bereit und ist für Robotik- und Wahrnehmungsanwendungen weit verbreitet. Die D435 basiert auf einem stereoskopischen Tiefenprinzip und ist für kompakte, echtzeitfähige Anwendungen ausgelegt \cite{realsense_d435, realsense_d400_datasheet}.
+
+Im Rahmen dieser Arbeit wird primär das RGB-Bild für die Feature-Erkennung verwendet. Die Tiefeninformation wird derzeit nur eingeschränkt genutzt, beispielsweise für mögliche \textit{Region-of-Interest}-Filterungen oder zur Festlegung einer konstanten Tiefenschätzung für die Visual-Servoing-Berechnung. Die Kamera wird in der vorliegenden Implementierung mit folgenden Einstellungen betrieben:
+
+\begin{itemize}
+	\item Auflösung: 640 $\times$ 480 Pixel
+	\item Bildrate: \SI{60}{Bilder\ pro\ Sekunde}
+\end{itemize}
+
+In der Praxis kann es aufgrund von Systemlast oder Kommunikationsverzögerungen zu gelegentlichen Einbrüchen der Bildrate kommen. Diese Effekte werden bei der Systemauslegung berücksichtigt. Die Kamera veröffentlicht ihre Bilddaten über den RealSense-ROS-Treiber auf dem ROS2-Topic \texttt{/camera/camera/color/image\_raw}. Zusätzlich wird ein ausgerichtetes Tiefenbild über \texttt{/camera/camera/aligned\_depth\_to\_color/image\_raw} bereitgestellt. Diese Topics dienen als Eingabe für die Feature-Erkennungsnode.
+
+\subsection{Robotersystem: UR5e}
+\label{subsec:ur5e}
+
+Als Robotersystem wird ein kollaborativer Industrieroboter des Typs UR5e verwendet. Der UR5e besitzt sechs Freiheitsgrade und einen Arbeitsradius von \SI{850}{mm}; er wird in dieser Arbeit über den offiziellen ROS2-Treiber für Universal Robots angesteuert \cite{ur5e_specs, ur_ros2_driver}. Die Steuerung erfolgt über einen kartesischen Geschwindigkeitscontroller. Dabei werden kartesische Geschwindigkeitsbefehle direkt an den Roboter gesendet, die anschließend vom Controller in Gelenkbewegungen umgesetzt werden.
+
+Der verwendete Controller ist \texttt{cartesian\_twist\_passthrough\_controller}. Die Steuerbefehle werden über folgendes ROS2-Topic veröffentlicht:
+
+\begin{center}
+	\texttt{/cartesian\_twist\_passthrough\_controller/cmd\_vel}
+\end{center}
+
+Der Controller akzeptiert kartesische Geschwindigkeiten in Form eines \textit{Twist}-Vektors. Im aktuellen System werden folgende Freiheitsgrade aktiv geregelt:
+
+\begin{itemize}
+	\item Translation entlang der x-, y- und z-Achse
+	\item Rotation um die z-Achse
+\end{itemize}
+
+Die Rotationen um die x- und y-Achse sind deaktiviert, um die Komplexität des Reglers zu reduzieren und eine stabilere Steuerung zu ermöglichen.
+
+\section{Softwarearchitektur}
+\label{sec:softwarearchitektur}
+
+Die Softwarearchitektur des Systems basiert auf dem \textit{Robot Operating System 2} (ROS2). ROS2 unterstützt die Aufteilung komplexer robotischer Systeme in modulare Nodes, die über Topics, Services und weitere Kommunikationsmechanismen miteinander interagieren \cite{ros2_nodes, ros2_topics}. Die Funktionalität ist in mehrere unabhängige ROS2-Pakete aufgeteilt, die jeweils spezifische Aufgaben innerhalb der IBVS-Pipeline übernehmen. Die Verwendung einer modularen Architektur ermöglicht eine klare Trennung zwischen Wahrnehmung, Datenverarbeitung und Robotersteuerung.
+
+\subsection{ROS2-Systemstruktur}
+\label{subsec:ros2_systemstruktur}
+
+Die Implementierung ist in mehrere ROS2-Pakete unterteilt:
+
+\begin{itemize}
+	\item \texttt{ibvs\_perception}: Erkennung von Keypoints und Deskriptoren aus Kamerabildern
+	\item \texttt{ibvs\_reference}: Aufbau und Verwaltung eines stabilen Referenzdatensatzes
+	\item \texttt{ibvs\_matching}: Zuordnung von aktuellen Bildfeatures zu Referenzfeatures
+	\item \texttt{ibvs\_control}: Berechnung der Roboterbewegung auf Basis des IBVS-Reglers
+	\item \texttt{ibvs\_msgs}: Definition der verwendeten ROS-Nachrichten
+\end{itemize}
+
+Diese Struktur erlaubt eine klare Trennung der einzelnen Verarbeitungsschritte und erleichtert die Erweiterung des Systems.
+
+\subsection{Docker-basierte Systemarchitektur}
+\label{subsec:docker_architektur}
+
+Zur Vereinfachung der Systemverwaltung wird das gesamte System in mehreren Docker-Containern betrieben. Jeder Container enthält einen klar definierten Teil des Systems. Die wichtigsten Container sind:
+
+\begin{itemize}
+	\item \texttt{camera\_driver}: RealSense-Treiber und Kamerapipeline
+	\item \texttt{ros2\_ur\_driver}: ROS2-Treiber für den UR5e-Roboter
+	\item \texttt{ros\_ws}: Workspace mit den IBVS-Paketen und der eigentlichen Visual-Servoing-Implementierung
+\end{itemize}
+
+Alle Container verwenden das Netzwerkmodell \texttt{network\_mode: host}. Dadurch können ROS2-Nodes in verschiedenen Containern direkt miteinander kommunizieren. Zusätzlich teilen sich alle Container dieselbe ROS-Domain-ID, wodurch die automatische Erkennung von ROS2-Nodes und Topics ermöglicht wird.
+
+\subsection{Datenfluss im System}
+\label{subsec:datenfluss}
+
+Der Datenfluss innerhalb des Systems folgt einer klar definierten Pipeline. Zunächst wird ein RGB-Bild von der Kamera aufgenommen und an die Feature-Erkennungsnode weitergeleitet. Diese Node extrahiert Keypoints und Deskriptoren aus dem Bild und veröffentlicht sie als ROS-Nachricht. Die Referenzmanager-Node nutzt diese Informationen, um über mehrere Frames hinweg ein stabiles Referenz-Feature-Set aufzubauen. Anschließend werden aktuelle Bildfeatures mit den Referenzfeatures gematcht. Die daraus entstehenden Feature-Korrespondenzen werden an den IBVS-Controller übergeben. Der Controller berechnet aus dem Bildfehler eine kartesische Geschwindigkeit, die schließlich als Steuerbefehl an den UR-Roboter gesendet wird.
+
+Der gesamte Datenfluss kann vereinfacht wie folgt dargestellt werden:
+
+\begin{center}
+	\begin{tabular}{c}
+		Camera Image \\
+		$\downarrow$ \\
+		Keypoint Detection \\
+		$\downarrow$ \\
+		Reference Feature Set \\
+		$\downarrow$ \\
+		Descriptor Matching \\
+		$\downarrow$ \\
+		Feature Filtering \\
+		$\downarrow$ \\
+		IBVS Controller \\
+		$\downarrow$ \\
+		Robot Motion
+	\end{tabular}
+\end{center}
+
+Diese Pipeline bildet die Grundlage für die visuelle Roboterregelung im entwickelten System.
+
+\section{Feature Detection}
+\label{sec:feature_detection}
+
+Die zuverlässige Erkennung stabiler Bildmerkmale stellt eine zentrale Voraussetzung für die erfolgreiche Anwendung von \textit{Image-Based Visual Servoing} dar. Da die Regelung direkt auf der Veränderung von Bildfeatures basiert, hängt die Stabilität des Systems maßgeblich von der Qualität der Feature-Erkennung und des Feature-Matchings ab. In dieser Arbeit wird zur Extraktion visueller Merkmale ein lernbasierter Feature-Detektor verwendet. Dieser Ansatz ermöglicht eine robustere Feature-Erkennung unter schwierigen Bildbedingungen als viele klassische Verfahren.
+
+\subsection{Keypoint Detection mit xFeat}
+\label{subsec:keypoint_detection_xfeat}
+
+Zur Erkennung von Keypoints und zugehörigen Deskriptoren wird der Feature-Detektor xFeat verwendet. xFeat ist ein moderner, lernbasierter Feature-Detektor, der speziell für eine effiziente und robuste lokale Feature-Erkennung in ressourcenbeschränkten Echtzeitsystemen entwickelt wurde \cite{potje2024xfeat}.
+
+Lernbasierte Feature-Methoden haben sich in den letzten Jahren als leistungsfähige Alternative zu klassischen Verfahren etabliert. Während traditionelle Algorithmen wie SIFT oder ORB auf handentwickelten Bildoperatoren basieren \cite{lowe2004sift, rublee2011orb}, lernen moderne Verfahren die Feature-Repräsentationen direkt aus Trainingsdaten. Dadurch können sie häufig robuster gegenüber Beleuchtungsänderungen, Bildrauschen und geometrischen Transformationen sein \cite{detone2018superpoint, sarlin2020superglue, potje2024xfeat}.
+
+Der verwendete xFeat-Detektor erzeugt für jedes Bild eine Menge von Keypoints sowie zugehörige Deskriptorvektoren. Jeder Keypoint beschreibt eine charakteristische Position im Bild, während der zugehörige Deskriptor die lokale Bildstruktur um diesen Punkt kodiert. Die Detektion erfolgt in mehreren Schritten:
+
+\begin{enumerate}
+	\item Extraktion lokaler Bildfeatures durch ein neuronales Netzwerk
+	\item Auswahl der relevantesten Keypoints
+	\item Berechnung zugehöriger Deskriptorvektoren
+\end{enumerate}
+
+Die Anzahl der extrahierten Keypoints wird durch den Parameter \texttt{top\_k} begrenzt, wodurch die Anzahl der zu verarbeitenden Features kontrolliert werden kann. In der aktuellen Konfiguration werden bis zu 1024 Keypoints pro Bild verwendet.
+
+Die Feature-Erkennung wird in der ROS2-Node \texttt{ibvs\_perception.keypoint\_node} implementiert. Diese Node empfängt Kamerabilder vom RealSense-Treiber und extrahiert daraus Keypoints und Deskriptoren. Die Eingabe erfolgt über das Topic \texttt{/camera/camera/color/image\_raw}. Die extrahierten Keypoints werden anschließend über das Topic \texttt{/ibvs/keypoints} veröffentlicht.
+
+\subsection{Feature-Deskriptoren}
+\label{subsec:feature_deskriptoren}
+
+Neben der Position eines Keypoints wird für jedes Feature ein Deskriptorvektor berechnet. Dieser Vektor beschreibt die lokale Bildstruktur um den Keypoint und ermöglicht die spätere Wiedererkennung des Features in anderen Bildern. Die Deskriptoren werden als hochdimensionale Vektoren dargestellt und in der ROS-Nachricht \texttt{ibvs\_msgs/Keypoints} übertragen.
+
+Die Struktur dieser Nachricht enthält insbesondere:
+
+\begin{itemize}
+	\item die Bildkoordinaten der Keypoints,
+	\item die Dimension der Deskriptorvektoren,
+	\item die Deskriptorwerte selbst,
+	\item optionale Score-Werte zur Bewertung der Featurequalität.
+\end{itemize}
+
+Die Deskriptoren werden im weiteren Verlauf der Pipeline verwendet, um aktuelle Bildfeatures mit einem zuvor gespeicherten Referenzdatensatz zu vergleichen. Der Vergleich der Deskriptoren erfolgt mithilfe einer Ähnlichkeitsmetrik. In dieser Arbeit wird hierfür die Cosinus-Ähnlichkeit verwendet. Zwei Features werden als korrespondierend betrachtet, wenn ihre Deskriptoren eine Ähnlichkeit oberhalb eines definierten Schwellenwerts aufweisen.
+
+\subsection{Depth-basierte Region-of-Interest-Filterung}
+\label{subsec:depth_roi_filterung}
+
+Zusätzlich zur RGB-Bildinformation stellt die RealSense-Kamera Tiefendaten bereit. Diese Tiefeninformationen können genutzt werden, um bestimmte Bildbereiche gezielt zu filtern. In der vorliegenden Implementierung kann optional eine depth-basierte \textit{Region of Interest} (ROI) verwendet werden. Dabei werden nur Features berücksichtigt, deren Tiefenwert innerhalb eines definierten Bereichs liegt.
+
+Der Vorteil dieses Ansatzes besteht darin, dass Bildbereiche außerhalb des relevanten Arbeitsraums des Roboters ausgeblendet werden können. Dadurch lässt sich die Anzahl irrelevanter Features reduzieren und die Stabilität des Feature-Matchings erhöhen. Die Tiefendaten werden über das Topic \texttt{/camera/camera/aligned\_depth\_to\_color/image\_raw} bereitgestellt. Falls die Depth-ROI aktiviert ist, wird für jeden Keypoint der zugehörige Tiefenwert überprüft. Features mit ungültigen oder außerhalb des definierten Bereichs liegenden Tiefenwerten werden verworfen.
+
+In der aktuellen Systemkonfiguration wird die Depth-Information primär zur optionalen Filterung verwendet, während für die Visual-Servoing-Berechnung eine konstante Tiefenschätzung angenommen wird.
 
 %% End of File %%
