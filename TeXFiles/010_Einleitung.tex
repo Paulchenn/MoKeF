@@ -4,10 +4,10 @@
 \section{Motivation}
 \label{sec:Motivation}
 In der industriellen Robotik spielt die präzise und flexible Positionierung von Werkzeugen oder Greifern eine zentrale Rolle. Klassische Automatisierungssysteme basieren häufig auf festen Programmen oder vorab definierten Positionen im Raum. Diese Ansätze stoßen jedoch an ihre Grenzen, sobald sich Umgebungsbedingungen ändern oder Objekte nicht exakt an der erwarteten Position liegen.
-Eine vielversprechende Lösung stellt die visuelle Roboterführung dar. Dabei wird ein Kamerasystem genutzt, um visuelle Informationen aus der Umgebung zu erfassen und diese direkt in den Regelkreis des Roboters einzubeziehen. Ein besonders verbreiteter Ansatz ist Image Based Visual Servoing (\ac{IBVS}). Hierbei wird die Bewegung des Roboters so geregelt, dass bestimmte Bildmerkmale – sogenannte Features oder Keypoints – im Kamerabild eine gewünschte Zielposition erreichen.
+Eine vielversprechende Lösung stellt die visuelle Roboterführung dar. Dabei wird ein Kamerasystem genutzt, um visuelle Informationen aus der Umgebung zu erfassen und diese direkt in den Regelkreis des Roboters einzubeziehen. Ein besonders verbreiteter Ansatz ist \ac{IBVS}. Hierbei wird die Bewegung des Roboters so geregelt, dass bestimmte Bildmerkmale – sogenannte Features oder Keypoints – im Kamerabild eine gewünschte Zielposition erreichen.
 Der Vorteil dieses Ansatzes liegt darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Stattdessen wird die Roboterbewegung direkt aus der Veränderung der Bildmerkmale berechnet. Dadurch können viele Aufgaben mit vergleichsweise geringer Modellierung der Umgebung gelöst werden.
 In realen industriellen Anwendungen treten jedoch häufig Probleme auf, die die Zuverlässigkeit der Feature-Erkennung beeinträchtigen. Besonders bei metallischen oder glänzenden Bauteilen kommt es durch starke Reflexionen, Überbelichtung oder ungünstige Beleuchtung zu instabilen Bildmerkmalen. Keypoints können temporär verschwinden, falsch erkannt werden oder ihre Position stark verändern. Dadurch wird der Regelkreis instabil oder verliert vollständig seine Referenzpunkte.
-Diese Problematik stellt eine zentrale Herausforderung für den praktischen Einsatz von IBVS in industriellen Umgebungen dar.
+Diese Problematik stellt eine zentrale Herausforderung für den praktischen Einsatz von \ac{IBVS} in industriellen Umgebungen dar.
 
 
 \section{Problemstellung}
@@ -23,7 +23,7 @@ In industriellen Szenarien treten mehrere Störeinflüsse auf:
 \end{itemize}
 
 Diese Effekte können dazu führen, dass zuvor zuverlässig erkannte Bildmerkmale plötzlich verschwinden oder falsch zugeordnet werden. Klassische Feature-Tracking-Methoden sind häufig nicht in der Lage, solche Situationen robust zu behandeln.
-Ein weiteres Problem besteht darin, dass viele IBVS-Systeme ausschließlich auf den aktuell erkannten Bildmerkmalen basieren. Sobald diese Merkmale nicht mehr verfügbar sind, kann der Regelkreis keine stabilen Steuergrößen mehr berechnen.
+Ein weiteres Problem besteht darin, dass viele \ac{IBVS}-Systeme ausschließlich auf den aktuell erkannten Bildmerkmalen basieren. Sobald diese Merkmale nicht mehr verfügbar sind, kann der Regelkreis keine stabilen Steuergrößen mehr berechnen.
 Daher besteht die zentrale Herausforderung darin, ein System zu entwickeln, das auch bei temporär fehlenden oder unzuverlässigen Keypoints weiterhin stabile Positionsinformationen bereitstellen kann.
 
 \section{Herausforderung bei reflektierenden Objekten}
@@ -44,7 +44,7 @@ In vielen industriellen Anwendungen ist es jedoch nicht möglich, die Beleuchtun
 
 \section{Ziel des Projekts}
 \label{sec:ZieldesProjekts}
-Ziel dieses Projekts ist die Entwicklung eines robusten Systems zur Stabilisierung von Image Based Visual Servoing unter schwierigen Bildbedingungen. Insbesondere soll ein Ansatz entwickelt werden, der reale Bildfeatures mit modellbasierten Vorhersagen kombiniert.
+Ziel dieses Projekts ist die Entwicklung eines robusten Systems zur Stabilisierung von \ac{IBVS} unter schwierigen Bildbedingungen. Insbesondere soll ein Ansatz entwickelt werden, der reale Bildfeatures mit modellbasierten Vorhersagen kombiniert.
 Die zentrale Idee besteht darin, zusätzlich zu den tatsächlich im Kamerabild erkannten Keypoints eine modellbasierte Vorhersage der erwarteten Featurepositionen zu berechnen. Diese Vorhersage kann auf Grundlage der bekannten Roboterkinematik sowie eines mathematischen Bewegungsmodells erfolgen.
 Das System nutzt somit zwei Informationsquellen:
 \begin{itemize}
@@ -65,7 +65,7 @@ Die wesentlichen Beiträge lassen sich wie folgt zusammenfassen:
 	\item Featurewiedererkennung durch Positionsschätzung basierend auf der Roboterkinematik
 	\item Integration eines Filters zur Bewertung der Featurequalität
 	\item Entwicklung einer Entscheidungsstrategie zur dynamischen Auswahl stabiler Features
-	\item Implementierung eines modularen Systems zur Integration in eine ROS2-basierte Robotiksoftware
+	\item Implementierung eines modularen Systems zur Integration in eine \ac{ROS2}-basierte Robotiksoftware
 \end{itemize}
 
 %% End of File %%
