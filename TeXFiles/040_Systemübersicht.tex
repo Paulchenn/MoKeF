@@ -121,6 +121,8 @@ Der gesamte Datenfluss kann vereinfacht wie folgt dargestellt werden:
 
 Diese Pipeline bildet die Grundlage für die visuelle Roboterregelung im entwickelten System.
 
+Zur Erhöhung der Robustheit existiert zusätzlich eine Rückkopplung (Feedback-Loop) zwischen dem IBVS-Controller (bzw. dem integrierten Filter) und dem Feature-Matching. Der Zustandsfilter veröffentlicht mit einer festen Frequenz kontinuierlich die prädizierten (vorhergesagten) Positionen der Keypoints im Bild. Geht ein Feature in der regulären Detektions-Pipeline temporär verloren, nutzt das Matching-Modul diese Vorhersagen, um das Feature in einer zielgerichteten lokalen Suche (\textit{Local Rescue}) wiederzufinden. Dieser Top-Down-Ansatz wird in den folgenden Kapiteln im Detail beschrieben.
+
 \section{Feature Detection}
 \label{sec:feature_detection}
 
