@@ -15,3 +15,5 @@
 *.synctex.gz
 thesis.pdf
 *.tdo
+*.bbl-SAVE-ERROR
+sonstiges/*
