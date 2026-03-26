@@ -128,19 +128,4 @@ Komplexere Modelle können zusätzlich Informationen über die Roboterkinematik 
 
 Solche Modelle ermöglichen es, auch dann eine Schätzung der Featureposition zu erhalten, wenn ein Feature im aktuellen Bild nicht direkt erkannt werden kann \cite{thrun2005probabilistic}.
 
-\section{Filtermethoden}
-\label{sec:Filtermethoden}
-Messdaten aus Kamerasystemen enthalten häufig Rauschen oder Ausreißer. Daher werden in vielen Anwendungen Filter eingesetzt, um Messwerte zu glätten und stabilere Schätzungen zu erhalten. \todo{QUELLE!!! (welche Anwendungen?)}
-
-Ein häufig verwendeter Ansatz ist der Kalman-Filter. Dieser kombiniert ein Zustandsmodell mit Messdaten, um eine optimale Schätzung des aktuellen Systemzustands zu berechnen. Dabei werden sowohl Unsicherheiten im Modell als auch im Messprozess berücksichtigt.
-
-Der Kalman-Filter besteht aus zwei Hauptschritten:
-\begin{listNorm}
-	\item Vorhersage des nächsten Zustands anhand des Bewegungsmodells
-	\item Korrektur dieser Vorhersage mithilfe der aktuellen Messung
-\end{listNorm}
-
-Eine einfachere Alternative ist der sogenannte 1€-Filter. Dieser Filter ist speziell für interaktive Systeme entwickelt worden und kombiniert eine einfache Glättung mit einer adaptiven Filterfrequenz. Dadurch kann er sowohl schnelle Bewegungen als auch kleine Messschwankungen effizient behandeln.
-
-Filtermethoden spielen eine wichtige Rolle bei der Stabilisierung von Featurepositionen im Bildraum und tragen dazu bei, den Regelkreis von Visual-Servoing-Systemen robuster zu machen.
 %% End of File %%
