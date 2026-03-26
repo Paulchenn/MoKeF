@@ -1,7 +1,135 @@
 \chapter{Experimente}
 \label{ch:experimente}
 
-\section{Testaufbau}
-\label{sec:Testaufbau}
+\section{Benchmarking-Methodik und Evaluierungsmetriken}
+\label{sec:benchmarking_methodik}
+Um die Leistungsfähigkeit der entwickelten Filter- und Entscheidungslogik objektiv zu bewerten, wird ein systematisches Benchmarking durchgeführt. Die Herausforderung besteht hierbei in der hohen Anzahl an Freiheitsgraden innerhalb der Versuchskonfiguration, die zu einer kombinatorischen Explosion der Testfälle führen kann.
 
+\subsection{Definition des Versuchsraums}
+\label{subsec:versuchsraum}
+Der theoretische Versuchsraum spannt sich aus vier Dimensionen auf:
+
+\begin{listNorm}
+    \item \textbf{Verarbeitungsstufen:}
+    \begin{listNorm}
+        \item Baseline (reine Keypoint-Detektion ohne Filterung)
+        \item Zustandsfilterung (Tracking der Keypoints)
+        \item Zustandsfilterung mit integriertem \ac{LR}
+    \end{listNorm}
+    
+    \item \textbf{Filter-Algorithmen:} 
+    \begin{listNorm}
+        \item \acf{KF}
+        \item \acf{EKF}
+        \item \acf{UKF}
+        \item \acf{ESKF}
+        \item 1\euro{}-Filter
+    \end{listNorm}
+    
+    \item \textbf{Test-Szenarien:}
+    \begin{listNorm}
+        \item \textbf{Szenario I (Standard):} Ideale Beleuchtung, keine Verdeckungen.
+        \item \textbf{Szenario II (Okklusion):} Temporäre Verdeckung der Zielpunkte (z.\,B. durch eine 3D-Druck-Brücke).
+        \item \textbf{Szenario III (Lichtwechsel):} Starke Reflexionen und Überbelichtung (Specular Highlights).
+        \item \textbf{Szenario IV (Kombination):} Gleichzeitiges Auftreten von Okklusion und instabilen Lichtverhältnissen.
+    \end{listNorm}
+    
+    \item \textbf{Bewegungs-Levels (DoF):}
+    \begin{listNorm}
+        \item \textbf{Level a:} Translation in x, y, z (Rotationen $\alpha, \beta, \gamma$ im Controller fixiert).
+        \item \textbf{Level b:} Translation in x, y, z sowie Rotation um $\gamma$ (z-Achse). $\alpha, \beta$ fixiert.
+        \item \textbf{Level c:} Volle 6 Freiheitsgrade (Full DoF).
+    \end{listNorm}
+\end{listNorm}
+
+\subsection{Methodische Abgrenzung und Reduktion}
+\label{subsec:methodische_abgrenzung}
+Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden folgende Komponenten begründet ausgeschlossen:
+
+\begin{listNorm}
+    \item \textbf{Ausschluss des SKF:} Der Standard \ac{KF} setzt ein lineares System- und Messmodell voraus. Da die perspektivische Projektion der Kamera sowie die Roboterkinematik inhärent nichtlinear sind, ist der SKF für ein präzises Feature-Tracking im Bildraum ungeeignet und wird durch seine nichtlinearen Erweiterungen (\ac{EKF}/\ac{UKF}) ersetzt. \todo[author=Paul]{QUELLE!!}
+    
+    \item \textbf{Ausschluss des 1\euro{}-Filters:} Dieser Filter fungiert als adaptiver Tiefpass auf Signalebene. Da er über kein internes physikalisches Modell verfügt, kann er während einer vollständigen Okklusion (Blindphasen) keine Prädiktion liefern, was für die Stabilität des \ac{IBVS}-Regelkreises in den gewählten Szenarien essenziell ist. \todo[author=Paul]{QUELLE!!}
+    
+    \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist hinreichend belegt. Ziel dieser Arbeit ist die Robustheit unter Extrembedingungen. Szenario I wird daher als trivial eingestuft und nicht weiter evaluiert, um den Fokus auf die Fehlerbehandlung in den Szenarien II bis IV zu legen. \todo[author=Paul]{QUELLE!!}
+\end{listNorm}
+
+\subsection{Design of Experiments (DoE)}
+\label{subsec:doe}
+Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gegen die relevanten Szenarien und Levels getestet werden (siehe Tabelle \ref{tab:versuchsmatrix}).
+
+\begin{table}[h]
+    \centering
+    \caption{Definierte System-Konfigurationen für das Benchmarking.}
+    \label{tab:versuchsmatrix}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{ID} & \textbf{Konfiguration} & \textbf{Beschreibung / Fokus} \\ \midrule
+        $C_1$ & Baseline & Reine Keypoint-Detektion (Referenzwert) \\
+        $C_2$ & \ac{EKF} & Zustandsschätzung mittels lokaler Linearisierung \\
+        $C_3$ & \ac{UKF} & Filterung mittels Unscented Transform \\
+        $C_4$ & \ac{ESKF} & Fehlerzustands-Filterung für Orientierungen \\
+        $C_5$ & \ac{EKF} + \ac{LR} & Kombination aus \ac{EKF} und Local-Rescue-Logik \\
+        $C_6$ & \ac{UKF} + \ac{LR} & Kombination aus \ac{UKF} und Local-Rescue-Logik \\
+        $C_7$ & \ac{ESKF} + \ac{LR} & Kombination aus \ac{ESKF} und Local-Rescue-Logik \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Tabelle~\ref{kombinationen_matrix} fasst die 30 gewählten Kombinationen zusammen.
+
+\begin{table}[H]
+    \centering
+    \caption{Matrix-Übersicht der Test-Kombinationen nach Level und Konfiguration.}
+    \label{tab:kombinationen_matrix}
+    \begin{tabular}{@{}llcccc@{}}
+        \toprule
+        \textbf{Level} & \textbf{Konfig.} & \textbf{Szen. II} & \textbf{Szen. III} & \textbf{Szen. IV} & \textbf{Summe} \\ \midrule
+        \textbf{a}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
+                       & $C_2$ -- $C_7$   & \checkmark        & --                 & --                & 6              \\ \cmidrule(lr){1-6}
+        \textbf{b}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
+                       & $C_2$ -- $C_7$   & \checkmark        & --                 & --                & 6              \\ \cmidrule(lr){1-6}
+        \textbf{c}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
+                       & $C_2$ -- $C_7$   & --                & \checkmark         & \checkmark        & 12             \\ \midrule
+        \textbf{Gesamt}&                  &                   &                    &                   & \textbf{30}    \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Versuchsplan und zeitliche Abschätzung}
+\label{subsec:versuchsplan}
+Für die verbleibenden 30 Kombinationen ergibt sich bei einer angenommenen Versuchszeit von ca. 30 Sekunden pro Einzellauf die in Tabelle~\ref{tab:zeitliche_abschaetzung} angegebenen Zeiten in Abhängigkeit der Stichprobengröße $N$ für die statistische Absicherung. Es ist zu beachten, dass die tatsächlichen Zeiten aufgrund von Setup- und Aufräumarbeiten sowie der Notwendigkeit von Wiederholungen bei fehlerhaften Durchläufen höher ausfallen können. Daher wurde ein konservativer Faktor von 1.5 für die Gesamtzeit inklusive aller Overheads angesetzt.
+
+\begin{table}[hbpt]
+    \centering
+    \caption{Zeitliche Abschätzung der Experimente in Abhängigkeit der Stichprobengröße $N$.}
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+        \toprule
+        \textbf{Stichprobe} & \textbf{Anzahl Kombinationen} & \textbf{Geschätzte Netto-Zeit} & \textbf{Inkl. Setup-Zeit (Faktor 1.5)} \\
+        \midrule
+        5  & 150 & 75\,min  & 1,875\,h \\
+        10 & 300 & 150\,min & 3,750\,h \\
+        15 & 450 & 225\,min & 5,625\,h \\
+        20 & 600 & 300\,min & 7,5\,h \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:zeitliche_abschaetzung}
+\end{table}
+
+Auf Basis dieser Kalkulation wird $N=10$ gewählt. Dies stellt einen optimalen Kompromiss zwischen statistischer Relevanz (Erkennbarkeit von Ausreißern in der Performance) und zeitlicher Durchführbarkeit dar.
+
+\subsection{Evaluierungsmetriken}
+\label{subsec:evaluierungsmetriken}
+Die Bewertung erfolgt anhand dreier Hauptkriterien:
+\begin{enumerate}
+    \item \textbf{Regelungsgenauigkeit (IBVS-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten:
+    \begin{equation}
+        E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
+    \end{equation}
+    \item \textbf{Steuerungsgüte (Robot Effort):} Analyse der Beschleunigungs-Jitter im kartesischen Raum, um die \enquote{Glattheit} der Bewegung trotz verrauschter Eingangsdaten zu bewerten. \todo{Wie genau?}
+    \item \textbf{Robustheit:} 
+    \begin{listAlph}
+        \item \textbf{Success Rate:} Anteil der Durchläufe, bei denen die Zielpose innerhalb des vorgegebenen Timeouts erreicht wird.
+        \item \textbf{Filter-Stabilität:} Anzahl der Filter-Resets aufgrund von Divergenz oder Instabilität.
+        \item \textbf{Local Rescue Effektivität:} Erfolgsrate der Local Rescue Maßnahmen bei Stufe 3, gemessen an der Wiederherstellung eines stabilen Tracking-Zustands nach einer Okklusion oder einem Lichtwechsel.
+    \end{listAlph}
+\end{enumerate}
 %% End of File %%
