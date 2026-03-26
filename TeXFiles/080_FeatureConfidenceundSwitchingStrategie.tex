@@ -4,5 +4,49 @@
 \section{Motivation}
 \label{sec:Motivation}
 
+\section{Prädiktionsbasiertes Local-Rescue-Matching}
+\label{sec:LocalRescue}
+Klassische Feature-Matching-Verfahren arbeiten in der Regel nach dem reinen Bottom-up-Prinzip: Bildmerkmale werden extrahiert und global mit einer Referenz verglichen. Schlägt dieser Prozess fehl, beispielsweise durch partielle Okklusion oder starke Reflexionen, geht der Keypoint für den Regelkreis verloren. Um dieses Problem zu adressieren, wurde eine Top-down-Rückkopplung (\textit{Guided Matching} oder \textit{Local Rescue}) in das System implementiert. 
+
+Der in den vorherigen Kapiteln beschriebene Zustandsfilter berechnet seine Prädiktion mit einer festen, definierten Frequenz, die unabhängig vom asynchronen Mess-Update (Kamerabild) abläuft. Diese prädizierten Pixelkoordinaten sowie die zugehörige Schätzunsicherheit werden kontinuierlich an das Matching-Modul publiziert. Kann ein zuvor aktiver Keypoint im globalen Matching nicht mehr zugeordnet werden, initiiert das System einen lokalen Rettungsversuch rund um die vom Modell vorhergesagte Position.
+
+\subsection{Adaptive Suchradien und Konfidenzschwellen}
+Der Local-Rescue-Ansatz nutzt die vom Filter berechnete Unsicherheit (Standardabweichung $\sigma_{px}$), um die Parameter der lokalen Suche dynamisch an den Systemzustand anzupassen. Die Unsicherheit wird zunächst basierend auf empirischen Grenzwerten ($\sigma_{low}$ und $\sigma_{high}$) auf ein normiertes Konfidenzmaß $u \in [0, 1]$ skaliert:
+\begin{equation}
+    u = \text{clip}\left(\frac{\sigma_{px} - \sigma_{low}}{\sigma_{high} - \sigma_{low}}, \, 0, \, 1\right)
+\end{equation}
+
+Dieser Unsicherheitswert $u$ moduliert sowohl den effektiven Suchradius $r_{eff}$ (in Pixeln) als auch den Mindest-Ähnlichkeitswert $t_{eff}$ (\textit{Similarity Threshold}) für den Vergleich der Deskriptoren linear:
+\begin{align}
+    r_{eff} &= r_{min} + u \cdot (r_{max} - r_{min}) \\
+    t_{eff} &= t_{min} + u \cdot (t_{max} - t_{min})
+\end{align}
+Ist sich der Filter seiner Vorhersage sehr sicher ($u \approx 0$), wird nur in einem sehr engen Radius mit einer moderaten Ähnlichkeitshürde gesucht. Ist der Filter hingegen unsicher, weil die Prädiktion über längere Zeit nicht korrigiert wurde ($u \approx 1$), wird der Suchradius stark vergrößert. Gleichzeitig wird ein sehr exakter Deskriptor-Match (hohes $t_{eff}$) gefordert, um Fehlassoziationen (\textit{False Positives}) in dem nun vergrößerten Suchbereich zu vermeiden.
+
+\subsection{Dynamische Score-Gewichtung}
+Alle Kandidaten, die innerhalb des adaptiven Suchradius $r_{eff}$ gefunden werden und die harte Ähnlichkeitsgrenze überschreiten, werden anhand eines kombinierten Scores bewertet. Dieser setzt sich aus der räumlichen Nähe (\textit{Position Score} $S_{pos}$) und der optischen Übereinstimmung (\textit{Similarity Score} $S_{sim}$) zusammen.
+
+Der Position-Score nimmt exponentiell mit der euklidischen Distanz $d$ zur vorhergesagten Position ab. Dies wird als nicht-normalisierte Gauß-Verteilung mit der Breite $\sigma_{pos} = \max(1.0, 0.5 \cdot r_{eff})$ modelliert:
+\begin{equation}
+    S_{pos} = \exp\left(-\frac{1}{2}\left(\frac{d}{\sigma_{pos}}\right)^2\right)
+\end{equation}
+
+Der Similarity-Score wird basierend auf der berechneten Cosinus-Ähnlichkeit $sim$ zwischen den Deskriptoren und einem absoluten Minimum $sim_{floor}$ auf das Intervall $[0, 1]$ normiert:
+\begin{equation}
+    S_{sim} = \text{clip}\left(\frac{sim - sim_{floor}}{1.0 - sim_{floor}}, \, 0, \, 1\right)
+\end{equation}
+
+Um eine situative Priorisierung zu erreichen, wird der finale Score durch das Unsicherheitsmaß $u$ exponentiell gewichtet:
+\begin{equation}
+    Score = \left(S_{pos}\right)^{1-u} \cdot \left(S_{sim}\right)^u
+\end{equation}
+Dieses Design garantiert, dass bei hoher Prädiktionsgewissheit (kleines $u$) die örtliche Nähe bei der Auswahl des Keypoints dominiert. Bei hoher Unsicherheit (großes $u$) verschiebt sich die Gewichtung, sodass die optische Deskriptor-Ähnlichkeit das ausschlaggebende Kriterium für einen erfolgreichen Match wird.
+
+\subsection{Ambiguity Check (Mehrdeutigkeitsprüfung)}
+In industriellen Umgebungen existieren häufig wiederkehrende, identische Strukturen (z.\,B. Lochraster, Schrauben oder Gitter), die den \textit{Local Rescue} täuschen könnten. Um Fehlzuordnungen in solchen stark repetitiven Szenen zu unterdrücken, wird abschließend ein Ambiguity Check durchgeführt.
+
+Hierfür wird der beste gefundene Kandidat mit dem zweitbesten Kandidaten verglichen. Die Zuordnung wird nur dann als gültig akzeptiert und als erfolgreicher \enquote{Rescue} an den Filter zurückgemeldet, wenn der beste Score sowohl einen absoluten Mindestabstand (\textit{min\_gap}) als auch ein definiertes Verhältnis (\textit{min\_ratio}) zum zweitbesten Score aufweist. Schlägt diese Eindeutigkeitsprüfung fehl, wird der Keypoint in diesem Frame verworfen, um eine Destabilisierung des Regelkreises zu verhindern.
+
+
 
 %% End of File %%
