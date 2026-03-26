@@ -3,5 +3,73 @@
 
 \section{Ziel des Filters}
 \label{sec:ZieldesFilters}
+Das primäre Ziel der in Kapitel~\ref{ch:filtermethoden} vorgestellten Filtermethoden ist es, eine konstante, rauschfreie und durchgehend verfügbare Zustandsschätzung für den Bild-Regelkreis (\ac{IBVS}) bereitzustellen. Wie zuvor beschrieben, schwankt die Anzahl der von Detektoren erkannten Keypoints $N_k$ stetig, und Ausreißer sowie Verdeckungen treten regelmäßig auf. Dieses Kapitel beschreibt die Architekturentscheidungen und Implementierungsstrategien, mit denen die mathematischen Modelle adaptiert werden, um die Steuerung unter solch dynamischen Umgebungsbedingungen robust auszuführen.
+
+\section{Dynamisches Keypoint-Tracking und Active-Set-Architektur}
+\label{sec:ActiveSet}
+In initialen Architektur-Entwürfen wurde untersucht, die Bildpunkte über eine Homographie in vier künstliche \textit{Proxy-Punkte} (eine Bounding-Box) zu transformieren, um eine konstante Dimension des Zustandsvektors zu erzwingen. Dieser Ansatz degradiert das System jedoch zu einem reinen 2D-Objekt-Tracker, wodurch der lokale, strukturelle Bezug individueller Keypoints -- die Kernvoraussetzung für ein präzises featurebasiertes Visual Servoing -- verloren geht.
+
+Daher wurde eine dynamische \textit{Active-Set-Architektur} entwickelt, die echte, individuelle Keypoints in einem einzigen kombinierten Filter trackt. Das System wählt aus den verfügbaren Roh-Matches deterministisch eine Teilmenge (\textit{Active Set}) von $N$ Keypoints aus (z.\,B. bis zu $N_{max} = 10$). Die Auswahl (\textit{Spatial Spreading}) maximiert die räumliche Verteilung der Keypoints im Bild, um degenerierte Geometrien (kolineare Punkte) zu vermeiden und eine gut konditionierte Interaktionsmatrix zu garantieren.
+
+Der Zustandsvektor $x$ wird dynamisch auf die Dimension $2N$ (bzw. $4N$ für den Standrad-\ac{KF}) initialisiert. Im Falle des \ac{EKF} beinhaltet der Vektor die 2D-Pixelkoordinaten aller aktiven Punkte:
+\begin{equation}
+    x = [u_1, v_1, u_2, v_2, \dots, u_N, v_N]^T
+\end{equation}
+Das Data-Association-Problem (die Zuordnung von Messungen zu Zustandsvariablen über mehrere Frames) wird gelöst, indem die festen Referenz-IDs des Feature-Matchers (z.\,B. \textit{xfeat}) in einer Lookup-Tabelle gespeichert werden. 
+
+Tritt nun temporäre Okklusion auf und ein Keypoint des Active Sets wird in der aktuellen Messung nicht gefunden, passt sich die Messmatrix $H$ dynamisch an. Die nicht beobachteten Zustände werden aus $H$ ausgeblendet, wodurch der Filter für diese Punkte rein prädiktiv (über die Roboterkinematik) weiterläuft, während die noch sichtbaren Punkte den Update-Schritt durchlaufen.
+
+\section{Architekturen und kinematische Vorsteuerung}
+\label{sec:ImageSpaceEKF}
+Bei rein kinematischen Annahmen wie dem \ac{CV}-Modell divergiert die Prädiktion bei abrupter Roboterbewegung (Filter-Lag). Um dies zu lösen, wird die Steuerungskinematik in das Prädiktionsmodell integriert.
+
+\subsection{Image-Space EKF}
+Anstatt die fehleranfällige 3D-Kamera-Pose zu filtern, bleibt der Zustandsvektor im 2D-Bildraum (\textit{Image-Space \ac{EKF}})~\cite{comport2006real}. Die bekannte 3D-Kamerageschwindigkeit $v_{cam}$ wird als Eingangsgröße $u_k$ genutzt. Die resultierende Pixelgeschwindigkeit $\dot{s}$ wird über die Bild-Jacobi-Matrix (Interaktionsmatrix) $L_s$ prädiziert~\cite{chaumette2006visual}:
+\begin{equation}
+    \dot{s} = L_s(x, Z) \cdot v_{cam}
+\end{equation}
+Da die Messung $z_k$ direkt aus projizierten Koordinaten besteht, vereinfacht sich das Messmodell zu einer linearen Einheitsmatrix $H = I$. Dies führt zu exzellenter Performance und eliminiert Latenzen durch Vorsteuerung~\cite{corke1996dynamic}.
+
+\subsection{Semi-Nichtlinearer UKF und ESKF}
+Als alternative Architekturen werden der \ac{UKF} sowie der \ac{ESKF} im System konzeptioniert:
+\begin{itemize}
+    \item \textbf{Semi-Nichtlinearer UKF:} Da nur das Prädiktionsmodell $L_s$ nichtlinear ist, wird die aufwendige Unscented Transform (UT) nur auf den Prädiktionsschritt angewandt~\cite{wan2000unscented}. Der Update-Schritt verbleibt streng linear, was Rechenzeit spart.
+    \item \textbf{ESKF:} Obwohl der Bildraum flach ($\mathbb{R}^8$) ist, ermöglicht die Aufteilung in Nominal- und Fehlerzustand eine saubere Entkopplung der asynchronen, hochfrequenten Kinematik (Prädiktion) von der niederfrequenten Sensorkorrektur (Kamera-Update).
+\end{itemize}
+
+\section{Systemtuning und Parametrisierung}
+\label{sec:Systemtuning}
+Das Verhalten der Filter hängt maßgeblich von der Parametrisierung ab.
+
+\subsection{Bestimmung von Q und R im Kalman-Filter}
+\begin{itemize}
+    \item \textbf{Messrauschen $R$:} Repräsentiert den Pixel-Jitter des Detektors. Bei empirisch ermittelten Schwankungen von ca. $\pm 10$ Pixeln ergibt sich eine Varianz von $R = 100.0 \cdot I$. Ein zu großes $R$ dämpft extrem, erhöht jedoch die Latenz.
+    \item \textbf{Prozessrauschen $Q$:} Modelliert die Unsicherheit der Systemkinematik. Im \ac{CV}-Modell muss $Q$ hoch gewählt werden ($Q \approx 500.0$), um unmodellierte Beschleunigungen abzufangen. Bei Verwendung der exakten Vorsteuerung über $L_s$ im \ac{EKF} kann $Q$ drastisch reduziert werden.
+\end{itemize}
+
+\subsection{Systematisches Tuning des 1\euro{}-Filters}
+Das Tuning des 1\euro{}-Filters erfolgt entkoppelt am realen System:
+\begin{enumerate}
+    \item \textbf{Minimierung des Jitters (Statisch):} Der Geschwindigkeitskoeffizient $\beta$ wird auf $0$ gesetzt. Die Kamera bleibt stationär. Die minimale Grenzfrequenz $f_{min}$ wird verringert (z.\,B. auf $0.05\,\text{Hz}$), bis das Rauschen ausreichend unterdrückt ist.
+    \item \textbf{Minimierung der Latenz (Dynamisch):} Die Kamera wird rasch bewegt. $\beta$ wird schrittweise erhöht, bis die dynamische Grenzfrequenz $f_c$ schnell genug ansteigt, sodass der sichtbare Lag (\textit{Phasenverschiebung}) eliminiert wird.
+\end{enumerate}
+
+\section{Fehlerbehandlung und Relokalisation}
+\label{sec:Fehlerbehandlung}
+Wird die Messung über mehrere Frames hinweg verworfen (z.\,B. durch das Mahalanobis-Gate bei Okklusion), greift das System ausschließlich auf den Prädiktionsschritt zurück. Dies führt zu einem Drift der Features im Bildraum.
+
+Um ein \textit{Deadlocking} des Filters bei andauernder Fehlmessung zu verhindern, ist eine Relokalisations-Logik (Tracking Recovery) implementiert~\cite{williams2007real}. Fällt die Anzahl der erfolgreich gematchten Keypoints des Active Sets unter einen kritischen Schwellenwert ($N_{min\_update}$, z.\,B. 4 Punkte), wird ein harter Reset forciert:
+\begin{itemize}
+    \item Das bisherige Active Set wird verworfen und ein komplett neues Set aus der aktuellen Rohmessung initialisiert.
+    \item Die Fehlerkovarianz $P$ wird auf einen extrem hohen Initialwert zurückgesetzt, was maximaler Unsicherheit entspricht und das Filter-Vertrauen in die nächste Messung reaktiviert.
+\end{itemize}
+
+\section{Stabilität und Vermeidung von Singularitäten}
+\label{sec:Singularitaeten}
+Beim geschlossenen Regelkreis müssen mathematische Singularitäten abgefangen werden:
+\begin{itemize}
+    \item \textbf{Kolinearität und Feature-Verteilung:} Eine Konzentration aller Features in einem engen Bildbereich würde zu einer schlecht konditionierten Interaktionsmatrix $L_s$ führen. Die deterministische \textit{Spread-Selektion} bei der Initialisierung des Active Sets stellt sicher, dass Features räumlich über das Bild gestreut werden, was die numerische Stabilität der Pseudoinversen maximiert.
+    \item \textbf{Aktor-Singularitäten (DLS):} Nähert sich der Roboterarm einer Streckung, verliert die Jacobi-Matrix den vollen Rang. Zur Unterdrückung extremer Gelenkgeschwindigkeiten wird die \textit{Damped Least Squares} (DLS) Methode nach Wampler~\cite{wampler1986manipulator} für die Pseudoinverse herangezogen.
+\end{itemize}
 
 %% End of File %%
