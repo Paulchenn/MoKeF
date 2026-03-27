@@ -93,7 +93,7 @@ Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden 
 
 \subsection{Design of Experiments (DoE)}
 \label{subsec:doe}
-Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gegen die relevanten Szenarien und Levels getestet werden (siehe Tabelle \ref{tab:versuchsmatrix}).
+Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gegen die relevanten Szenarien und Levels getestet werden. Um die Robustheit gegenüber unterschiedlichen Oberflächenbeschaffenheiten zu validieren, wird jede dieser Testreihen für alle drei in Abschnitt~\ref{subsec:versuchsraum} definierten Bauteil-Typen (Typ 1 bis Typ 3) durchgeführt. 
 
 \begin{table}[h]
     \centering
@@ -112,7 +112,7 @@ Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gege
     \end{tabular}
 \end{table}
 
-Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Tabelle~\ref{tab:kombinationen_matrix} fasst die 30 gewählten Kombinationen zusammen.
+Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Die in Tabelle~\ref{tab:kombinationen_matrix} dargestellte Matrix definiert somit 30 Basiskombinationen, die durch die drei Stichproben-Typen auf insgesamt 90 experimentelle Kombinationen anwachsen. Dieser Aufbau erlaubt es, die Einflüsse von Geometrie (Levels), Störung (Szenarien) und Materialeigenschaft (Bauteile) systematisch zu isolieren.
 
 \begin{table}[H]
     \centering
@@ -131,27 +131,37 @@ Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um
     \end{tabular}
 \end{table}
 
+
 \subsection{Versuchsplan und zeitliche Abschätzung}
 \label{subsec:versuchsplan}
-Für die verbleibenden 30 Kombinationen ergibt sich bei einer angenommenen Versuchszeit von ca. 30 Sekunden pro Einzellauf die in Tabelle~\ref{tab:zeitliche_abschaetzung} angegebenen Zeiten in Abhängigkeit der Stichprobengröße $N$ für die statistische Absicherung. Es ist zu beachten, dass die tatsächlichen Zeiten aufgrund von Setup- und Aufräumarbeiten sowie der Notwendigkeit von Wiederholungen bei fehlerhaften Durchläufen höher ausfallen können. Daher wurde ein konservativer Faktor von 1.5 für die Gesamtzeit inklusive aller Overheads angesetzt.
+
+Durch die Ausweitung der Versuchsreihen auf drei Bauteil-Typen ergeben sich insgesamt 90 zu untersuchende Kombinationen. Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Da die Varianz der Messergebnisse nun über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
+
+Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung. Mit 450 Einzelläufen bietet dieser Plan eine breite Datenbasis bei gleichzeitig handhabbarer Gesamtdauer.
 
 \begin{table}[hbpt]
     \centering
-    \caption{Zeitliche Abschätzung der Experimente in Abhängigkeit der Stichprobengröße $N$.}
+    \caption{Zeitliche Abschätzung für 90 Kombinationen (30 Matrixtests $\times$ 3 Bauteile).}
     \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
         \toprule
-        \textbf{Stichprobe} & \textbf{Anzahl Kombinationen} & \textbf{Geschätzte Netto-Zeit} & \textbf{Inkl. Setup-Zeit (Faktor 1.5)} \\
+        \textbf{Stichprobe ($N$)} & \textbf{Anzahl Läufe (Gesamt)} & \textbf{Netto-Zeit} & \textbf{Brutto-Zeit (Faktor 1.5)} \\
         \midrule
-        5  & 150 & 75\,min  & 1,875\,h \\
-        10 & 300 & 150\,min & 3,750\,h \\
-        15 & 450 & 225\,min & 5,625\,h \\
-        20 & 600 & 300\,min & 7,5\,h \\
+        3  & 270 & 135\,min & 3,375\,h \\
+        \textbf{5}  & \textbf{450} & \textbf{225\,min} & \textbf{5,625\,h} \\
+        10 & 900 & 450\,min & 11,250\,h \\
         \bottomrule
     \end{tabularx}
     \label{tab:zeitliche_abschaetzung}
 \end{table}
 
-Auf Basis dieser Kalkulation wird $N=10$ gewählt. Dies stellt einen optimalen Kompromiss zwischen statistischer Relevanz (Erkennbarkeit von Ausreißern in der Performance) und zeitlicher Durchführbarkeit dar.
+Auf Basis dieser Kalkulation wird $N=5$ gewählt. Dies ermöglicht eine umfassende Abdeckung des Versuchsraums über alle Bauteil-Typen hinweg bei einer Brutto-Versuchszeit von knapp unter sechs Stunden.
+
+Hinsichtlich des Versuchsablaufs wird für jede der 90 Kombinationen zu Beginn eine neue Initialisierung durchgeführt, bei der ein dedizierter Referenzdatensatz aufgenommen wird. Diese Referenz bleibt für alle fünf zugehörigen Testläufe ($N=5$) unverändert. Dieses Vorgehen wird aus zwei Gründen gewählt:
+\begin{enumerate}
+    \item \textbf{Isolierung von Störeinflüssen:} Durch die konstante Referenz innerhalb einer Testreihe wird sichergestellt, dass die gemessene Varianz in den Evaluierungsmetriken primär auf die dynamischen Störungen der Szenarien (z.\,B. Okklusionen oder Lichtwechsel) zurückzuführen ist. Würde für jeden Lauf eine neue Initialisierung erfolgen, könnten geringfügige Abweichungen im Referenzmodell (z.\,B. durch Sensorrauschen während der Aufnahme) die Ergebnisse überlagern und die Vergleichbarkeit einschränken.
+    \item \textbf{Praxisnähe:} Das Vorgehen bildet einen typischen industriellen Prozess ab, bei dem ein System einmalig für eine Aufgabe initialisiert wird, um anschließend eine Serie von Arbeitszyklen unter schwankenden Umgebungsbedingungen stabil auszuführen.
+\end{enumerate}
+
 
 \subsection{Evaluierungsmetriken}
 \label{subsec:evaluierungsmetriken}
@@ -162,7 +172,25 @@ Die Bewertung erfolgt anhand dreier Hauptkriterien:
     \begin{equation}
         E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
     \end{equation}
-    \item \textbf{Steuerungsgüte (Robot Effort):} Analyse der Beschleunigungs-Jitter im kartesischen Raum, um die \enquote{Glattheit} der Bewegung trotz verrauschter Eingangsdaten zu bewerten. \todo{Wie genau?}
+    \item \textbf{Steuerungsgüte (Robot Effort):} 
+    Diese Metrik bewertet die Stabilität und \enquote{Glattheit} der berechneten Stellgrößen. Um den mechanischen Bias des Roboters (wie interne Filterung oder Trägheit) zu eliminieren, wird direkt der Output des \ac{IBVS}-Controllers — ein 6D-Twist-Vektor bestehend aus translatorischen ($\dot{x}, \dot{y}, \dot{z}$) und rotatorischen Geschwindigkeiten ($\dot{\alpha}, \dot{\beta}, \dot{\gamma}$) — als Messgröße herangezogen.
+
+    Zur Auswertung werden die translatorischen und rotatorischen Komponenten getrennt betrachtet und mittels der Euklidischen Norm ($L_2$-Norm) zu einem richtungsunabhängigen Betrag zusammengefasst:
+    \begin{equation}
+        \left|v\right|_{trans} = \sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2} \quad \left[m/s\right] \quad \text{und}
+    \end{equation}
+    \begin{equation}
+        \left|\omega\right|_{rot} = \sqrt{\dot{\alpha}^2 + \dot{\beta}^2 + \dot{\gamma}^2} \quad \left[rad/s\right]
+    \end{equation}
+
+    Die Analyse dieser Zeitreihen erfolgt über zwei spezifische Kennzahlen:
+    \begin{itemize}
+        \item \textbf{Jitter-Index:} Zur Quantifizierung der \enquote{Zittrigkeit} wird die totale Variation des Geschwindigkeitssignals berechnet. Ein hoher kumulierter Jitter weist auf instabile Feature-Daten und daraus resultierende nervöse Reglerreaktionen hin:
+        \begin{equation}
+            Jitter = \sum_{t=1}^{T} \left| \left|v\right|_t - \left|v\right|_{t-1} \right|
+        \end{equation}
+        \item \textbf{Effektive Pfadlänge:} Durch Integration der kommandierten Geschwindigkeiten über die Versuchszeit wird die tatsächlich zurückgelegte Strecke im Kontrollraum ermittelt. Ein effizientes System zeichnet sich durch eine Pfadlänge aus, die nahe an der theoretischen Ideallinie liegt, während ein unruhiges System durch Schwingungen und Umwege eine deutlich erhöhte Pfadlänge aufweist.
+    \end{itemize}
     \item \textbf{Robustheit:} 
     \begin{listAlph}
         \item \textbf{Success Rate:} Anteil der Durchläufe, bei denen die Zielpose innerhalb des vorgegebenen Timeouts erreicht wird.
