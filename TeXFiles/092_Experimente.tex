@@ -7,7 +7,7 @@ Um die Leistungsfähigkeit der entwickelten Filter- und Entscheidungslogik objek
 
 \subsection{Definition des Versuchsraums}
 \label{subsec:versuchsraum}
-Der theoretische Versuchsraum spannt sich aus vier Dimensionen auf:
+Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
 
 \begin{listNorm}
     \item \textbf{Verarbeitungsstufen:}
@@ -34,13 +34,50 @@ Der theoretische Versuchsraum spannt sich aus vier Dimensionen auf:
         \item \textbf{Szenario IV (Kombination):} Gleichzeitiges Auftreten von Okklusion und instabilen Lichtverhältnissen.
     \end{listNorm}
     
-    \item \textbf{Bewegungs-Levels (DoF):}
+    \item \textbf{Bewegungs-Levels (\ac{DoF}):}
     \begin{listNorm}
         \item \textbf{Level a:} Translation in x, y, z (Rotationen $\alpha, \beta, \gamma$ im Controller fixiert).
         \item \textbf{Level b:} Translation in x, y, z sowie Rotation um $\gamma$ (z-Achse). $\alpha, \beta$ fixiert.
-        \item \textbf{Level c:} Volle 6 Freiheitsgrade (Full DoF).
+        \item \textbf{Level c:} Volle 6 Freiheitsgrade (Full \ac{DoF}).
     \end{listNorm}
+
+    \item \textbf{Stichproben/Bauteile:}
+        \begin{listNorm}
+            \item \textbf{Typ 1 (Texturiert, nicht spiegelnd):} Ein Bauteil mit ausgeprägter Textur und diffuser Oberfläche (z.\,B. ein beschriftetes Blatt Papier, siehe Abbildung \ref{fig:sample_type1}).
+            \item \textbf{Typ 2 (Texturiert, spiegelnd):} Ein Bauteil mit Textur, das jedoch spiegelnde Eigenschaften aufweist (z.\,B. eine Leiterplatte oder ein Mainboard, siehe Abbildung \ref{fig:sample_type2}).
+            \item \textbf{Typ 3 (Wenig Textur, stark spiegelnd):} Ein Bauteil mit geringer oder keiner Textur und stark spiegelnder Oberfläche (z.\,B. ein metallisches Bauteil oder eine polierte Fläche, siehe Abbildung \ref{fig:sample_type3}).
+        \end{listNorm}
 \end{listNorm}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \missingfigure{}
+        % \includegraphics[width=\textwidth]{Figures/png/HKA_Logo.png} % Pfad anpassen
+        \caption{Typ 1: Texturiert, nicht spiegelnd}
+        \label{fig:sample_type1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \missingfigure{}
+        % \includegraphics[width=\textwidth]{Figures/png/HKA_Logo.png} % Pfad anpassen
+        \caption{Typ 2: Texturiert, spiegelnd}
+        \label{fig:sample_type2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \missingfigure{}
+        % \includegraphics[width=\textwidth]{Figures/png/HKA_Logo.png} % Pfad anpassen
+        \caption{Typ 3: Wenig Textur, stark spiegelnd}
+        \label{fig:sample_type3}
+    \end{subfigure}
+    \caption{Beispiele der verwendeten Stichproben/Bauteile für die Experimente.}
+    \label{fig:experiment_samples}
+\end{figure}
+
 
 \subsection{Methodische Abgrenzung und Reduktion}
 \label{subsec:methodische_abgrenzung}
@@ -75,7 +112,7 @@ Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gege
     \end{tabular}
 \end{table}
 
-Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Tabelle~\ref{kombinationen_matrix} fasst die 30 gewählten Kombinationen zusammen.
+Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Tabelle~\ref{tab:kombinationen_matrix} fasst die 30 gewählten Kombinationen zusammen.
 
 \begin{table}[H]
     \centering
@@ -120,7 +157,8 @@ Auf Basis dieser Kalkulation wird $N=10$ gewählt. Dies stellt einen optimalen K
 \label{subsec:evaluierungsmetriken}
 Die Bewertung erfolgt anhand dreier Hauptkriterien:
 \begin{enumerate}
-    \item \textbf{Regelungsgenauigkeit (IBVS-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten:
+    \item \textbf{Regelungsgenauigkeit (\ac{IBVS}-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten:
+    \todo[inline, author=Tim]{Stimmt die Formel?}
     \begin{equation}
         E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
     \end{equation}
