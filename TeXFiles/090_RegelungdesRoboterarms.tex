@@ -1,7 +1,155 @@
 \chapter{Regelung des Roboterarms}
-\label{ch:RegelungdesRoboterarms}
+\label{chap:regelung_roboterarm}
 
-\section{IBVS Regelkreis}
-\label{sec:IBVSRegelkreis}
+Dieses Kapitel beschreibt die Regelung des Roboterarms im entwickelten \ac{IBVS}-System. Ziel der Regelung ist es, die Differenz zwischen aktuell beobachteten und gewünschten Bildmerkmalen zu minimieren und daraus kartesische Bewegungsbefehle für den Roboter abzuleiten. Im Gegensatz zu einer rein bildbasierten Standardregelung wird der Regler in dieser Arbeit so erweitert, dass neben direkt beobachteten Merkmalen auch gefilterte beziehungsweise modellgestützte Merkmalspositionen verarbeitet werden können. Dadurch soll insbesondere in Szenarien mit Reflexionen, kurzzeitigem Featureverlust und instabiler Tiefeninformation ein robusteres Regelverhalten erreicht werden.
 
-%% End of File %%
+\section{Regelungsprinzip}
+\label{sec:regelungsprinzip}
+
+Die entwickelte Regelung folgt dem Grundprinzip des \ac{IBVS}. Ausgangspunkt sind Bildmerkmale, die sowohl in einer Referenzansicht als auch im aktuellen Kamerabild vorliegen. Für jedes Merkmal wird die Differenz zwischen aktueller und gewünschter Bildposition berechnet. Aus diesem Bildfehler wird anschließend ein kartesischer Geschwindigkeitsvektor bestimmt, der den \ac{TCP} des Roboters so bewegt, dass sich die Merkmale der Referenzlage annähern.
+
+Seien
+\begin{equation}
+\mathbf{s}_i =
+\begin{bmatrix}
+u_i \\ v_i
+\end{bmatrix}
+\qquad \text{und} \qquad
+\mathbf{s}_i^\ast =
+\begin{bmatrix}
+u_i^\ast \\ v_i^\ast
+\end{bmatrix}
+\end{equation}
+die aktuelle beziehungsweise gewünschte Bildposition des \(i\)-ten Merkmals. Dann ergibt sich der zu minimierende Bildfehler zu
+\begin{equation}
+\mathbf{e}_i = \mathbf{s}_i - \mathbf{s}_i^\ast.
+\end{equation}
+
+Für \(n\) Merkmale wird daraus der Gesamtfehlervektor
+\begin{equation}
+\mathbf{e} =
+\begin{bmatrix}
+u_1-u_1^\ast &
+v_1-v_1^\ast &
+\cdots &
+u_n-u_n^\ast &
+v_n-v_n^\ast
+\end{bmatrix}^{\top}.
+\end{equation}
+Da die Regelung nicht direkt in Pixelkoordinaten, sondern in normierten Bildkoordinaten formuliert wird, erfolgt zunächst eine Umrechnung mit den Kameraintrinsiken:
+\begin{equation}
+x_i = \frac{u_i-c_x}{f_x},
+\qquad
+y_i = \frac{v_i-c_y}{f_y}.
+\end{equation}
+Die normierten Koordinaten bilden anschließend die Grundlage für die Interaktionsmatrix und damit für die Berechnung des Geschwindigkeitsbefehls.
+
+\section{Einbindung realer und gefilterter Keypoints}
+\label{sec:einbindung_keypoints}
+
+Der Regler verarbeitet nicht ausschließlich rohe, direkt aus dem Kamerabild stammende Merkmale. Stattdessen ist die Architektur so ausgelegt, dass zwischen unterschiedlichen Merkmalsquellen unterschieden werden kann. Grundsätzlich stehen zwei Arten von Eingangsgrößen zur Verfügung:
+
+\begin{enumerate}
+    \item direkt gematchte Merkmale aus dem aktuellen Bild und
+    \item gefilterte beziehungsweise modellgestützte Merkmale aus der vorgelagerten Filterstufe.
+\end{enumerate}
+
+Im Normalfall wird die gefilterte Merkmalsquelle bevorzugt verwendet, da diese zeitlich geglättete und im Idealfall robustere Bildpunktlagen liefert. Dies ist insbesondere dann vorteilhaft, wenn einzelne Keypoints aufgrund von Reflexionen, Belichtungsänderungen oder kurzzeitiger Verdeckung instabil werden. Für den Fall, dass keine aktuellen gefilterten Merkmale verfügbar sind, kann der Regler auf rohe Matches zurückfallen. Dadurch bleibt der Regelkreis auch dann arbeitsfähig, wenn die Filterstufe temporär keine verlässlichen Schätzungen bereitstellt.
+
+Diese Einbindung gefilterter Keypoints stellt die zentrale Verbindung zu den vorherigen Kapiteln dar: Während dort die Bewertung, Auswahl und Stabilisierung der Merkmale erfolgt, nutzt die Regelung diese Informationen als robuste Eingangsgröße zur Berechnung der Roboterbewegung.
+
+\section{Berechnung der kartesischen Stellgröße}
+\label{sec:berechnung_stellgroesse}
+
+Die Beziehung zwischen Bildfehler und Kamerabewegung wird über die Interaktionsmatrix beschrieben. Für ein einzelnes Punktmerkmal mit normierten Bildkoordinaten \((x_i,y_i)\) und Tiefe \(z_i\) ergibt sich die bekannte Punkt-Interaktionsmatrix zu
+\begin{equation}
+\mathbf{L}_i =
+\begin{bmatrix}
+-\frac{1}{z_i} & 0 & \frac{x_i}{z_i} & x_i y_i & -(1+x_i^2) & y_i \\
+0 & -\frac{1}{z_i} & \frac{y_i}{z_i} & 1+y_i^2 & -x_i y_i & -x_i
+\end{bmatrix}.
+\end{equation}
+Für \(n\) Merkmale ergibt sich daraus folgende Gesamtinteraktionsmatrix:
+\begin{equation}
+\mathbf{L} =
+\begin{bmatrix}
+\mathbf{L}_1 \\
+\mathbf{L}_2 \\
+\vdots \\
+\mathbf{L}_n
+\end{bmatrix}.
+\end{equation}
+Zur Berechnung des Geschwindigkeitsvektors wird in der vorliegenden Arbeit eine gedämpfte Least-Squares-Lösung verwendet. Diese ist numerisch robuster als eine direkte Inversion und reduziert die Empfindlichkeit gegenüber schlecht konditionierten Konfigurationen oder einer ungünstigen Merkmalsverteilung. Der kamerabezogene Geschwindigkeitsvektor \(\mathbf{v}_{\mathrm{cam}}\) ergibt sich zu
+\begin{equation}
+\mathbf{v}_{\mathrm{cam}}
+=
+-\lambda
+\left(
+\mathbf{L}^{\top}\mathbf{L} + \mu^2 \mathbf{I}
+\right)^{-1}
+\mathbf{L}^{\top}\mathbf{e},
+\end{equation}
+wobei \(\lambda\) den Reglerverstärkungsfaktor und \(\mu\) die Dämpfung der \ac{DLS}-Lösung bezeichnet.
+
+Ein wesentliches Merkmal der Implementierung besteht darin, dass die aktiven kartesischen \acp{DoF} gezielt freigeschaltet werden können. Dadurch ist der Regler nicht auf eine feste Bewegungsdimension beschränkt. Vielmehr kann für die Versuche untersucht werden, wie sich unterschiedliche Kombinationen translatorischer und rotatorischer Freiheitsgrade auf das Regelverhalten auswirken. Methodisch entspricht dies einer Reduktion der Interaktionsmatrix auf die jeweils aktiven Spalten. Die resultierende Lösung wird anschließend wieder in einen vollständigen sechsdimensionalen Twist eingebettet, wobei inaktive Komponenten auf Null gesetzt werden.
+
+\section{Tiefenverarbeitung}
+\label{sec:tiefenverarbeitung_regler}
+
+Für die Berechnung der Interaktionsmatrix wird pro Merkmal eine Tiefeninformation benötigt. Liegen gültige Tiefenwerte vor, werden diese direkt verwendet. In realen industriellen Szenarien ist jedoch davon auszugehen, dass Tiefenmessungen nicht jederzeit vollständig oder zuverlässig verfügbar sind. Insbesondere reflektierende Oberflächen können zu unvollständigen oder verrauschten Tiefenschätzungen führen.
+
+Aus diesem Grund verwendet die Regelung zusätzlich eine Tiefen-Fallback-Strategie. Falls für einzelne Merkmale keine gültige Tiefe vorliegt, wird auf einen Ersatzwert zurückgegriffen. Dieser kann aus einer Grundschätzung stammen oder durch zeitliche Glättung vorheriger Tiefenbeobachtungen stabilisiert werden. Auf diese Weise bleibt die Interaktionsmatrix auch bei partiell fehlender Tiefeninformation definiert, und der Regler kann weiterarbeiten, ohne unmittelbar in einen instabilen Zustand zu geraten.
+
+Die Tiefenverarbeitung ist damit kein separates Modul neben dem Regler, sondern ein integraler Bestandteil der eigentlichen Stellgrößenberechnung. Sie trägt wesentlich dazu bei, dass die Regelung auch unter praxisnahen Bedingungen mit unvollständigen Sensordaten robust bleibt.
+
+\section{Transformation in das Roboterframe}
+\label{sec:transformation_roboterrahmen}
+
+Der aus dem Bildfehler berechnete Geschwindigkeitsvektor liegt zunächst im Kamerakoordinatensystem vor. Für die Ansteuerung des Roboterarms muss dieser Vektor jedoch in das Koordinatenframe überführt werden, welches der kartesische Robotercontroller erwartet. Zu diesem Zweck wird der kamerabezogene Twist zunächst in das \ac{TCP}-Frame und anschließend in das Basisframe des Roboters transformiert.
+
+Für die Transformation vom Kameraframe in das \ac{TCP}-Frame wird neben der Rotationsbeziehung auch der Hebelarm zwischen Kamera und \ac{TCP} berücksichtigt. Damit ergibt sich für den translatorischen Anteil
+\begin{equation}
+\mathbf{v}_{\mathrm{tcp}} =
+\mathbf{R}_{\mathrm{tcp}\leftarrow\mathrm{cam}}\,\mathbf{v}_{\mathrm{cam}}
+-
+\boldsymbol{\omega}_{\mathrm{tcp}} \times \mathbf{p}_{\mathrm{tcp}\leftarrow\mathrm{cam}},
+\end{equation}
+wobei \(\mathbf{R}_{\mathrm{tcp}\leftarrow\mathrm{cam}}\) die Rotationsmatrix zwischen Kamera- und \ac{TCP}-Frame und \(\mathbf{p}_{\mathrm{tcp}\leftarrow\mathrm{cam}}\) den Positionsvektor zwischen beiden Frames bezeichnet. Anschließend wird der Twist in das Basisframe des Roboters transformiert:
+\begin{equation}
+\mathbf{v}_{\mathrm{base}} =
+\mathbf{R}_{\mathrm{base}\leftarrow\mathrm{tcp}}\,\mathbf{v}_{\mathrm{tcp}}.
+\end{equation}
+
+Diese Transformation ist für die praktische Einsetzbarkeit des Reglers entscheidend. Nur so kann sichergestellt werden, dass die aus dem Bildraum berechnete Korrekturbewegung konsistent in eine physikalisch sinnvolle Bewegung des Roboterarms überführt wird.
+
+\section{Stabilisierung des Regelkreises}
+\label{sec:stabilisierung_regelkreis}
+
+Damit der Regler auch unter schwankenden Beobachtungsbedingungen ein ruhiges Bewegungsverhalten zeigt, werden mehrere Stabilisierungsmechanismen kombiniert. Zunächst wird die berechnete Stellgröße betragsmäßig begrenzt, sodass lineare und rotatorische Geschwindigkeiten definierte Maximalwerte nicht überschreiten. Dies verhindert abrupte Kommandos und erhöht die Betriebssicherheit.
+
+Zusätzlich erfolgt eine zeitliche Glättung des Geschwindigkeitsvektors. Dazu werden sprunghafte Änderungen zunächst durch eine kurze Medianbildung unterdrückt und anschließend mit einer \ac{EMA}-artigen Glättung zeitlich abgefedert. Ergänzend kann die Änderungsgeschwindigkeit der Stellgröße begrenzt werden. Dadurch wird nicht nur der absolute Betrag, sondern auch die zeitliche Dynamik des Befehls beschränkt. Besonders bei verrauschten Bildmerkmalen oder kurzzeitigen Fehlzuordnungen reduziert dies das Risiko eines hektischen oder oszillierenden Roboterverhaltens.
+
+Ein weiterer stabilisierender Aspekt ist die gedämpfte Lösung der \ac{IBVS}-Gleichung. Durch die \ac{DLS}-Formulierung reagiert der Regler weniger empfindlich auf ungünstige Merkmalskonfigurationen und bleibt auch dann numerisch beherrschbar, wenn die Interaktionsmatrix schlecht konditioniert ist.
+
+\section{Verhalten bei Featureverlust und unsicheren Beobachtungen}
+\label{sec:verhalten_featureverlust}
+
+Ein zentrales Ziel der vorliegenden Arbeit ist die Stabilisierung des Regelkreises bei unsicheren oder zeitweise ausfallenden Bildmerkmalen. Entsprechend sieht die Regelung mehrere Schutzmechanismen vor.
+
+Zunächst wird eine Bewegung nur dann freigegeben, wenn die Initialisierung abgeschlossen ist und überhaupt eine gültige Referenz vorliegt. Weiterhin wird geprüft, ob eine ausreichende Anzahl aktueller Merkmalszuordnungen verfügbar ist. Ist dies nicht der Fall, wird kein Bewegungsbefehl ausgegeben. Dasselbe gilt, wenn die zuletzt empfangenen Merkmale bereits veraltet sind oder keine konsistente Merkmalsquelle ausgewählt werden kann.
+
+Darüber hinaus wird die aktuelle Abweichung zur Referenz kontinuierlich überwacht. Unterschreitet der Bildfehler einen vorgegebenen Schwellwert über eine gewisse Haltezeit, wird das Ziel als erreicht betrachtet und der Regler gibt ein Nullkommando aus. Dadurch wird vermieden, dass der Roboter in der Zielnähe unnötig weiterregelt oder auf geringfügiges Bildrauschen reagiert.
+
+Gerade im Zusammenspiel mit den vorgelagerten Confidence- und Switching-Mechanismen zeigt sich hier der Mehrwert des Gesamtansatzes: Der Regler ist nicht darauf angewiesen, dass jederzeit alle realen Features stabil sichtbar sind. Stattdessen kann er mit gefilterten oder modellgestützten Merkmalslagen weiterarbeiten und nur dann auf einen sicheren Stillstand gehen, wenn die Beobachtungslage insgesamt nicht mehr ausreichend verlässlich ist.
+
+\section{Einordnung im Gesamtsystem}
+\label{sec:einordnung_gesamtsystem_regler}
+
+Die Regelung des Roboterarms bildet die letzte Verarbeitungsstufe des entwickelten Systems. Während die vorherigen Komponenten die Detektion, Zuordnung, Bewertung und gegebenenfalls Modellierung von Keypoints übernehmen, übersetzt der Regler diese Information in eine physische Roboterbewegung. Der Regler ist damit nicht isoliert zu betrachten, sondern als Teil einer Kette aus Merkmalsextraktion, Matching, Filterung und Entscheidungslogik.
+
+Aus methodischer Sicht ist dabei besonders relevant, dass die Regelung gezielt auf die Herausforderungen reflektierender Objekte ausgelegt wurde. Die Einbindung gefilterter Keypoints, die robuste Tiefenbehandlung, die Freischaltung unterschiedlicher \acp{DoF} sowie die Glättung und Begrenzung der Stellgrößen schaffen gemeinsam die Grundlage für einen stabileren visuellen Regelkreis auch unter schwierigen Bildbedingungen.
+
+\section{Zusammenfassung}
+\label{sec:zusammenfassung_regler}
+
+Zusammenfassend realisiert die entwickelte Reglerstruktur eine robuste \ac{IBVS}-basierte Ansteuerung des Roboterarms. Die Regelung verarbeitet Referenz- und Ist-Merkmale, berechnet daraus über die Interaktionsmatrix einen kartesischen Geschwindigkeitsvektor und transformiert diesen in den Roboterbasisrahmen. Durch die Einbindung gefilterter Keypoints, eine stabile Tiefenbehandlung, die selektive Aktivierung von \acp{DoF} sowie mehrere Schutz- und Glättungsmechanismen wird der Regelkreis gezielt auf instabile Sichtbedingungen vorbereitet. Damit bildet das Kapitel die methodische Grundlage für die spätere experimentelle Untersuchung des Regelverhaltens unter unterschiedlichen Beobachtungs- und Störbedingungen.

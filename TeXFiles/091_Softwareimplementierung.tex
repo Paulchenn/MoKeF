@@ -1,7 +1,100 @@
 \chapter{Softwareimplementierung}
-\label{ch:softwareimplementierung}
+\label{chap:softwareimplementierung}
 
-\section{Systemanforderungen}
-\label{sec:systemanforderungen}
+Dieses Kapitel beschreibt die softwaretechnische Umsetzung des entwickelten \ac{IBVS}-Systems. Ziel der Implementierung war eine modulare und erweiterbare Architektur, die Wahrnehmung, Referenzverwaltung, Merkmalsabgleich, Filterung und Regelung klar voneinander trennt. Gleichzeitig sollte die Software so aufgebaut sein, dass unterschiedliche Detektoren, Filtervarianten und Regelungsparameter mit möglichst geringem Anpassungsaufwand untersucht werden können.
+
+Die Umsetzung basiert auf \ac{ROS2} und folgt einem paketorientierten Aufbau. Die Kommunikation zwischen den einzelnen Komponenten erfolgt über Topics, Services und Parameter. Dadurch lässt sich das System flexibel konfigurieren und schrittweise erweitern. Ein weiterer Schwerpunkt lag auf der Trennung zwischen experimenteller Entwicklungsumgebung in Python und einer performanteren C++-Variante für den Filterteil.
+
+\section{Systemumgebung und Softwarebasis}
+\label{sec:systemumgebung_softwarebasis}
+
+Die Software wurde für den Einsatz in einer \ac{ROS2}-basierten Umgebung entwickelt. Der Gesamtaufbau orientiert sich an einem klassischen verteilten Robotiksystem, in dem Wahrnehmung, Schätzung und Regelung als voneinander getrennte Knoten ausgeführt werden. Für die Implementierung wurden sowohl Python-basierte als auch C++-basierte \ac{ROS2}-Pakete verwendet. Dadurch konnte einerseits eine schnelle Entwicklung und Anpassung von Algorithmen realisiert werden, andererseits stehen für rechenintensive Komponenten performantere Implementierungen zur Verfügung.
+
+Die modulare Umsetzung unterstützt darüber hinaus eine reproduzierbare Integration in eine containerisierte Entwicklungsumgebung. Dies ist insbesondere für die Nachvollziehbarkeit von Experimenten, die Verwaltung von Abhängigkeiten sowie den Austausch zwischen verschiedenen Rechnern von Vorteil.
+
+\section{Paketstruktur des ROS2-Workspaces}
+\label{sec:paketstruktur_ros2_workspace}
+
+Der entwickelte Workspace ist in mehrere funktional getrennte Pakete unterteilt. Eine zentrale Rolle übernimmt dabei das Paket \texttt{ibvs\_msgs}, das die benutzerdefinierten Nachrichtenstrukturen des Systems bereitstellt. Dieses Paket bildet die gemeinsame Kommunikationsgrundlage für alle weiteren Komponenten.
+
+Das Paket \texttt{ibvs\_perception} bildet den Einstiegspunkt der visuellen Verarbeitung. Es enthält die Keypoint-Erkennung aus Kamerabildern und ist als Python-Paket umgesetzt. Darauf aufbauend übernimmt \texttt{ibvs\_matching} den Merkmalsabgleich zwischen aktuellen und Referenzmerkmalen. Für die modellbasierte Schätzung und Glättung steht \texttt{ibvs\_filter\_cpp} als C++-basierte leistungsorientierte Ausführung zur Verfügung. Die Erzeugung der Roboterkommandos erfolgt im Paket \texttt{ibvs\_control}, während \texttt{ibvs\_reference} die Referenzmerkmale verwaltet und für den Regelkreis bereitstellt.
+
+Durch diese Paketstruktur wird eine klare funktionale Trennung zwischen Wahrnehmung, Merkmalsabgleich, Zustandsschätzung, Referenzverwaltung und Regelung erreicht. Gleichzeitig lassen sich einzelne Komponenten unabhängig voneinander erweitern oder austauschen, ohne die Gesamtarchitektur grundlegend verändern zu müssen.
+
+\section{Implementierung der zentralen ROS2-Nodes}
+\label{sec:implementierung_zentraler_ros2_knoten}
+
+\subsection{Keypoint-Erkennung}
+\label{sec:implementierung_keypoint_erkennung}
+
+Die visuelle Wahrnehmung wird im Wesentlichen durch die Node \texttt{keypoint\_node.py} realisiert. Diese empfängt die Kameradaten und extrahiert daraus die für das \ac{IBVS} benötigten Bildmerkmale. Die Implementierung ist so ausgelegt, dass unterschiedliche Detektoren verwendet werden können. Hierzu zählen klassische Verfahren wie \ac{ORB} und \ac{SIFT} sowie lernbasierte Ansätze wie SuperPoint und XFeat. Dadurch ist die Wahrnehmungskomponente nicht auf einen einzelnen Merkmalsextraktor festgelegt, sondern kann abhängig vom Anwendungsfall angepasst werden.
+
+Neben der Farbbildverarbeitung unterstützt die Node auch die Einbindung ausgerichteter Tiefendaten. Diese werden unter anderem genutzt, um eine tiefenbasierte \ac{ROI} zu erzeugen und damit nahe beziehungsweise relevante Bildbereiche gezielt auszuwerten. Zusätzlich stellt der Knoten Debug-Topics zur Visualisierung detektierter Keypoints und verwendeter Masken bereit. Die Ausgabe der Merkmale erfolgt über eine benutzerdefinierte Nachricht des Typs \texttt{Keypoints}. 
+
+\subsection{Referenzverwaltung}
+\label{sec:implementierung_referenzverwaltung}
+
+Die Verwaltung der Referenzmerkmale erfolgt über die Node \texttt{reference\_manager\_node.py}. Diese übernimmt die Aufgabe, während einer Initialisierungsphase mehrere Keypoint-Beobachtungen zu sammeln, zu konsolidieren und daraus eine stabile Referenzmenge zu erzeugen. Die Referenz wird anschließend auf dem Topic \texttt{/ibvs/reference/keypoints} bereitgestellt. Zusätzlich publiziert die Node über \texttt{/ibvs/init\_done}, ob die Initialisierung erfolgreich abgeschlossen wurde. Beide Publisher sind dabei als latched-artige, transiente Verbindungen ausgelegt, sodass neu startende Nodes unmittelbar den aktuellen Zustand erhalten. 
+
+Zur Bildung einer stabilen Referenz werden wiederkehrende Kandidaten über ihre Position und ihre Deskriptorähnlichkeit zusammengeführt. Die Implementierung verwendet dabei unter anderem eine Cosinus-Ähnlichkeit für den Vergleich der Merkmalsvektoren sowie räumliche Gating-Kriterien im Bildraum. Auf diese Weise wird vermieden, dass instabile Einzelbeobachtungen direkt als Referenz übernommen werden. Die Referenzverwaltung bildet damit die Grundlage für einen konsistenten Merkmalsabgleich im späteren Trackingbetrieb. :contentReference[oaicite:3]{index=3}
+
+\subsection{Merkmalsabgleich}
+\label{sec:implementierung_merkmalsabgleich}
+
+Der Merkmalsabgleich wird im Paket \texttt{ibvs\_matching} umgesetzt. Dessen zentrale Aufgabe besteht darin, die aktuell detektierten Merkmale mit den zuvor gespeicherten Referenzmerkmalen in Beziehung zu setzen. Die resultierenden Zuordnungen werden anschließend als Eingangsgröße für Filterung und Regelung verwendet.
+
+Die Implementierung unterstützt neben dem eigentlichen Deskriptor-Matching zusätzliche Mechanismen zur Robustheitssteigerung. Dazu zählen ein optionaler Prefilter zur Begrenzung auf besonders aussagekräftige Matches sowie ein konfigurierbarer Local-Rescue-Mechanismus. Letzterer ermöglicht es, ausgefallene globale Zuordnungen lokal wiederherzustellen, indem modellierte oder gefilterte Merkmalslagen als zusätzliche Hilfsinformation genutzt werden. Ergänzend stehen Visualisierungs- und Debug-Komponenten zur Verfügung, um die Qualität des Matchings im laufenden Betrieb zu analysieren. 
+
+\subsection{Filterung und Zustandsschätzung}
+\label{sec:implementierung_filterung_zustandsschaetzung}
+
+Die modellbasierte Filterung und Zustandsschätzung wird in der vorliegenden Implementierung durch die C++-Node \texttt{filter\_node} aus dem Paket \texttt{ibvs\_filter\_cpp} realisiert. Diese Node ist als performante Laufzeitkomponente für die Verarbeitung der Merkmalszustände ausgelegt und bildet die zentrale Schätzinstanz zwischen Merkmalsabgleich und Regelung. Sie verarbeitet Referenzmerkmale, aktuelle Matches, Kamerainformationen sowie den vom Robotercontroller bereitgestellten Geschwindigkeitsinput und erzeugt daraus gefilterte Merkmalslagen für den weiteren Regelbetrieb. 
+
+Die Node unterstützt mehrere Filtertypen, die über den Parameter \texttt{filter\_type} ausgewählt werden können. Implementiert sind ein \ac{EKF}, ein \ac{UKF}, ein \ac{ESKF} sowie ein \ac{KF}. Nach Empfang der Kameraintrinsiken aus der \texttt{CameraInfo}-Nachricht wird der jeweils gewählte Filter instanziiert und mit den aktuellen Rausch- und Gating-Parametern initialisiert. Zu den zentralen Laufzeitparametern gehören unter anderem \texttt{q\_noise}, \texttt{r\_noise}, \texttt{gate\_threshold}, \texttt{z\_depth}, \texttt{predict\_rate}, \texttt{max\_active\_keypoints}, \texttt{min\_init\_keypoints} und \texttt{min\_update\_keypoints}. 
+
+Für die Prädiktion der Merkmalsbewegung nutzt die Node neben den Referenz- und Match-Daten auch den kamerabezogenen beziehungsweise in das Kameraframe transformierten Geschwindigkeitsvektor. Hierzu wird der empfangene kartesische Twist über die \ac{TF}-Beziehungen zwischen Basis-, \ac{TCP}- und Kameraframe in das Kameraframe umgerechnet. Auf dieser Grundlage kann die erwartete Bewegung der aktiven Merkmale modellbasiert vorhergesagt und anschließend mit den gemessenen Matches abgeglichen werden. Die gefilterten Ergebnisse werden auf \texttt{/ibvs/filtered\_features} publiziert und stehen dem Regler damit als stabilisierte Merkmalsquelle zur Verfügung. Zusätzlich veröffentlicht die Node Status- und Diagnoseinformationen, darunter Filterstatus, Unsicherheit, Update-Status sowie die Anzahl aktiver und erfolgreich aktualisierter Merkmale. 
+
+Ein weiterer Vorteil der C++-Implementierung besteht in ihrer expliziten Unterstützung von Debug- und Testmodi. Über Laufzeitparameter beziehungsweise den Session Manager können unter anderem ein reiner Prädiktionsmodus ohne Match-Updates, eine manuelle Relokalisierung sowie ein kombinierter Reset-Freeze-Ablauf ausgelöst werden. Dadurch lässt sich das Verhalten der Schätzung gezielt unter verschiedenen Störbedingungen untersuchen, ohne die Node neu implementieren oder den Gesamtablauf des Systems verändern zu müssen. 
+\subsection{Reglerknoten}
+\label{sec:implementierung_reglerknoten}
+
+Die eigentliche Ansteuerung des Roboterarms erfolgt in der Node \texttt{ibvs\_twist\_controller\_node.py}. Diese verarbeitet die aktuelle Referenz, rohe Matches und optional gefilterte Merkmale. Über den Parameter \texttt{feature\_source} kann festgelegt werden, ob bevorzugt mit rohen oder mit gefilterten Merkmalen gearbeitet werden soll. Zusätzlich ist ein Fallback-Mechanismus implementiert, sodass bei fehlenden oder veralteten gefilterten Merkmalen automatisch auf rohe Matches zurückgegriffen werden kann. 
+
+Der Regler publiziert kartesische Twist-Kommandos für den Robotercontroller und stellt darüber hinaus ein separates Statussignal bereit, das das Erreichen des Regelziels kennzeichnet. Zusätzlich kann ein Debug-Topic für die Winkelgeschwindigkeit aktiviert werden. Für die tatsächliche Befehlsausgabe werden mehrere Verarbeitungsschritte kombiniert, darunter Geschwindigkeitsbegrenzung, Median- beziehungsweise \ac{EMA}-basierte Glättung sowie eine \ac{TF}-basierte Umrechnung des im Kameraframes berechneten Twists in den vom Roboter erwarteten Koordinatenframe. 
+
+\section{Nachrichtenformate und Datenfluss}
+\label{sec:nachrichtenformate_datenfluss}
+
+Die Kommunikation zwischen den einzelnen Nodes basiert auf benutzerdefinierten Nachrichten aus dem Paket \texttt{ibvs\_msgs}. Diese bilden die Grundlage für den Austausch visueller Merkmale, Merkmalszuordnungen und Debug-Informationen. Im Zentrum stehen dabei insbesondere die Nachrichtentypen \texttt{Keypoints} und \texttt{Matches}. Während \texttt{Keypoints} die extrahierten Merkmale einschließlich ihrer Bildpositionen und Deskriptorinformationen repräsentiert, beschreibt \texttt{Matches} die Zuordnung zwischen aktuellen und gewünschten beziehungsweise referenzierten Merkmalen.
+
+Der resultierende Datenfluss folgt der logischen Struktur des \ac{IBVS}-Systems. Zunächst werden Kamerabilder in der Wahrnehmungskomponente verarbeitet und in Keypoints überführt. Diese werden anschließend mit den Referenzmerkmalen abgeglichen. Die daraus entstehenden Matches dienen wiederum als Eingangsgröße für die Filterung und für die Regelung. Der Regler erzeugt aus diesen Informationen kartesische Geschwindigkeitsbefehle für den Roboterarm. In vereinfachter Form ergibt sich somit der Ablauf:
+\[
+\text{Kamerabild} \rightarrow \text{Wahrnehmung} \rightarrow \text{Matching} \rightarrow \text{Filterung} \rightarrow \text{Regelung} \rightarrow \text{Roboter}.
+\]
+
+Diese Aufteilung erlaubt eine klare Trennung der Verantwortlichkeiten innerhalb des Systems. Gleichzeitig erleichtert sie das Debugging, da jede Verarbeitungsstufe über klar definierte Ein- und Ausgänge verfügt.
+
+\section{Start- und Laufzeitsteuerung über den Session Manager}
+\label{sec:start_laufzeitsteuerung_session_manager}
+
+Im Gegensatz zu einer rein launch-basierten Inbetriebnahme wird das System in der vorliegenden Arbeit über einen interaktiven Session Manager orchestriert. Dieser übernimmt das Starten, Stoppen und Parametrieren der zentralen Knoten zur Laufzeit. Die Implementierung unterscheidet dabei zwischen einer Core-Phase, einer Initialisierungsphase, einer Tracking-Phase und dem optionalen Filterbetrieb. Über das textbasierte Menü können unter anderem Core-Knoten gestartet, die Referenzinitialisierung ausgelöst, Tracking aktiviert oder verschiedene Filter- und Reglereinstellungen vorgenommen werden. 
+
+Beim Start des Core-Betriebs werden zunächst Keypoint-Erkennung und Referenzverwaltung aktiviert. Die Initialisierung ruft anschließend einen Service zur Referenzaufnahme auf und wartet auf das Signal \texttt{/ibvs/init\_done}. Erst wenn dieser Zustand erreicht ist, wird der Trackingbetrieb mit Descriptor Matcher und Visualisierung freigegeben. Während des Übergangs zwischen Initialisierung und Tracking können außerdem Kamera- und Keypoint-Parameter angepasst werden, beispielsweise zur Nutzung tiefenbasierter Maskierung in der Initialisierungsphase und zu einer reduzierten Verarbeitung im späteren Trackingbetrieb. 
+
+Darüber hinaus erlaubt der Session Manager das Setzen von Local-Rescue-Modi, Prefilter-Parametern, Filtertypen und Glättungsprofilen des Controllers. Für den Regler sind mehrere Profile hinterlegt, die unterschiedliche Kompromisse zwischen Reaktionsgeschwindigkeit und Laufruhe abbilden. Auf diese Weise wird die Laufzeitsteuerung zu einem integralen Bestandteil der Softwarearchitektur und nicht lediglich zu einer externen Startlogik. 
+
+\section{Besonderheiten der Implementierung}
+\label{sec:besonderheiten_implementierung}
+
+Eine wesentliche Eigenschaft der entwickelten Software ist ihre konsequente Modularität. Die einzelnen Verarbeitungsschritte sind nicht nur logisch, sondern auch implementierungstechnisch voneinander getrennt. Dadurch können alternative Detektoren, Matching-Strategien, Filtertypen oder Reglerkonfigurationen gezielt untersucht werden. Dies ist insbesondere für die experimentelle Arbeit von Vorteil, da Änderungen in einer Stufe nicht zwangsläufig Anpassungen in allen anderen Modulen erfordern.
+
+Hinzu kommt die bewusste Unterscheidung zwischen experimenteller Flexibilität und späterer Leistungsoptimierung. Während große Teile des Systems in Python umgesetzt wurden, steht für die Filterung zusätzlich eine C++-Variante zur Verfügung. Diese Kombination ermöglicht sowohl eine schnelle Entwicklung als auch eine leistungsfähigere Ausführung für rechenkritische Komponenten.
+
+Schließlich wurde die Implementierung so gestaltet, dass neben dem eigentlichen Regelbetrieb auch Debugging und Analyse gezielt unterstützt werden. Hierzu zählen latched-artige Referenzpublisher, Debug-Topics für Wahrnehmung und Matching, Laufzeitparameter für Filter und Regler sowie die menügesteuerte Steuerung der Gesamtpipeline. Die Software dient damit nicht nur als technische Umsetzung des Verfahrens, sondern gleichzeitig als experimentelle Forschungsplattform.
+
+\section{Zusammenfassung}
+\label{sec:zusammenfassung_softwareimplementierung}
+
+Zusammenfassend wurde das entwickelte \ac{IBVS}-System als modularer \ac{ROS2}-Workspace mit klar voneinander getrennten Paketen für Nachrichten, Wahrnehmung, Referenzverwaltung, Matching, Filterung und Regelung umgesetzt. Die Kommunikation erfolgt über benutzerdefinierte Nachrichten und standardisierte \ac{ROS2}-Mechanismen. Durch die Kombination aus Python- und C++-Komponenten, einer interaktiven Laufzeitsteuerung sowie umfangreichen Debug- und Parametrierungsmöglichkeiten entstand eine flexible Softwarebasis, die sowohl für die experimentelle Untersuchung als auch für eine robuste praktische Ausführung geeignet ist.
 
 %% End of File %%

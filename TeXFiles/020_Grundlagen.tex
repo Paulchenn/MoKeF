@@ -31,46 +31,63 @@ Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Po
 
 \section{Interaction Matrix und Image Jacobian}
 \label{sec:InteractionMatrixundImageJacobian}
-Ein zentrales Element von \ac{IBVS} ist die sogenannte Interaction Matrix, auch als Image Jacobian bezeichnet. Diese Matrix beschreibt den Zusammenhang zwischen der Bewegung der Kamera und der Veränderung der Bildmerkmale. \cite{corke2017robotics}
 
-Die Interaction Matrix stellt eine lineare Beziehung zwischen der Geschwindigkeit der Kamera und der zeitlichen Änderung der Featurepositionen im Bild her.
+Ein zentrales Element von \ac{IBVS} ist die sogenannte Interaction Matrix, auch als Image Jacobian bezeichnet. Sie beschreibt den Zusammenhang zwischen der Bewegung der Kamera und der zeitlichen Änderung der Bildmerkmale im Bildraum. \cite{corke2017robotics, chaumette2006visual}
 
-Mathematisch kann dieser Zusammenhang wie folgt beschrieben werden: \cite{chaumette2006visual}
+Allgemein lässt sich dieser Zusammenhang durch
 \begin{equation}
-\dot{s} = L_s \cdot v_c
+\dot{\mathbf{s}} = \mathbf{L}_s \, \mathbf{v}_c
 \end{equation}
-
-Dabei gilt:
+beschreiben. Dabei gilt:
 \begin{listNorm}
-	\item $\dot{s}$ : zeitliche Änderung der Bildfeatures
-	\item $L_s$ : Interaction Matrix
-	\item $v$ : Geschwindigkeitsvektor der Kamera
+    \item $\dot{\mathbf{s}}$ : zeitliche Änderung der Bildmerkmale
+    \item $\mathbf{L}_s$ : Interaction Matrix
+    \item $\mathbf{v}_c$ : Geschwindigkeitsvektor der Kamera
 \end{listNorm}
 
-Der Geschwindigkeitsvektor enthält sowohl translatorische als auch rotatorische Bewegungen der Kamera.
-
-Die Interaction Matrix hängt von mehreren Faktoren ab: \cite{chaumette2006visual}
-\begin{listAlph}
-	\item der aktuellen Position der Features im Bild
-	\item der Tiefe der Features im Raum
-	\item den Kameraparametern
-\end{listAlph}
-
-Um den Roboter zu steuern, wird üblicherweise eine Pseudoinverse der Interaction Matrix verwendet. Der typische \ac{IBVS}-Regler lautet: \cite{chaumette2006visual}
+Der kamerabezogene Geschwindigkeitsvektor setzt sich aus translatorischen und rotatorischen Anteilen zusammen und kann geschrieben werden als
 \begin{equation}
-	\mathbf{v}_c = -\lambda \mathbf{L}_e^{+} (\mathbf{s}^* - \mathbf{s})
+\mathbf{v}_c =
+\begin{bmatrix}
+v_x & v_y & v_z & \omega_x & \omega_y & \omega_z
+\end{bmatrix}^{\top}.
 \end{equation}
 
-Dabei gilt:
-\begin{listNorm}
-	\item $s$ : aktuelle Featureposition
-	\item $\mathbf{s}^*$ : gewünschte Featureposition
-	\item $\lambda$ : Regelverstärkung
-	\item $\mathbf{L}_e^{+}$ : Pseudoinverse der Interaction Matrix
-\end{listNorm}
+Für ein einzelnes Punktmerkmal mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ ergibt sich die zugehörige Interaction Matrix zu \cite{chaumette2006visual}
+\begin{equation}
+\mathbf{L}_p =
+\begin{bmatrix}
+-\frac{1}{Z} & 0 & \frac{x}{Z} & xy & -(1+x^2) & y \\
+0 & -\frac{1}{Z} & \frac{y}{Z} & 1+y^2 & -xy & -x
+\end{bmatrix}.
+\end{equation}
 
-Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, bis die Features ihre gewünschte Position erreicht haben. \cite{chaumette2006visual}
+Diese Matrix beschreibt, wie sich die Bildkoordinaten eines einzelnen Punktmerkmals in Abhängigkeit von der Kamerabewegung verändern. Dabei hängen die translatorischen Anteile direkt von der Tiefe $Z$ ab, während die rotatorischen Anteile von der aktuellen Bildlage des Punktes beeinflusst werden. \cite{chaumette2006visual}
 
+Werden mehrere Punktmerkmale gleichzeitig betrachtet, so wird für jedes Merkmal eine eigene Interaction Matrix aufgestellt. Die gesamte Interaction Matrix ergibt sich dann aus den Einzelmatrizen:
+\begin{equation}
+\mathbf{L}_s =
+\begin{bmatrix}
+\mathbf{L}_{p,1} \\
+\mathbf{L}_{p,2} \\
+\vdots \\
+\mathbf{L}_{p,n}
+\end{bmatrix}.
+\end{equation}
+
+Für $n$ Punktmerkmale besitzt die gesamte Interaction Matrix damit die Dimension $2n \times 6$. Da diese Matrix im Allgemeinen nicht quadratisch ist, kann sie in der Regel nicht direkt invertiert werden. Stattdessen wird ihre Pseudoinverse verwendet. Diese ermöglicht es, auch für überbestimmte oder unterbestimmte Gleichungssysteme eine Lösung für die Kamerageschwindigkeit zu berechnen. Im Kontext von \ac{IBVS} wird dabei typischerweise diejenige Geschwindigkeit bestimmt, welche den Bildfehler im Sinne einer Least-Squares-Lösung bestmöglich reduziert. \cite{chaumette2006visual, corke2017robotics}
+
+Zur Regelung wird der Bildfehler zwischen aktueller und gewünschter Merkmalslage definiert als
+\begin{equation}
+\mathbf{e} = \mathbf{s} - \mathbf{s}^{*},
+\end{equation}
+wobei $\mathbf{s}$ die aktuellen und $\mathbf{s}^{*}$ die gewünschten Bildmerkmale bezeichnet. Ein typischer \ac{IBVS}-Regler ergibt sich dann zu \cite{chaumette2006visual}
+\begin{equation}
+\mathbf{v}_c = -\lambda \, \mathbf{L}_s^{+} \, (\mathbf{s} - \mathbf{s}^{*}),
+\end{equation}
+wobei $\lambda > 0$ die Regelverstärkung und $\mathbf{L}_s^{+}$ die Pseudoinverse der Interaction Matrix bezeichnet.
+
+Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, sodass die aktuellen Bildmerkmale gegen ihre gewünschte Referenzlage konvergieren. Die Interaction Matrix bildet dabei die mathematische Grundlage, um aus einem Fehler im Bildraum eine geeignete Kamerabewegung abzuleiten. \cite{chaumette2006visual}
 \section{Keypoint Detection und Feature Matching}
 \label{sec:KeypointDetectionundFeatureMatching}
 Damit ein \ac{IBVS}-System arbeiten kann, müssen zunächst stabile Bildmerkmale im Kamerabild erkannt werden. Diese Merkmale werden häufig als Keypoints oder Features bezeichnet.

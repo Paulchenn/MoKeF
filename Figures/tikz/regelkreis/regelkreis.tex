@@ -1,0 +1,214 @@
+\documentclass[tikz,border=3mm]{standalone}
+
+%%%% Serifenloser Textstil (Calibri-ähnlich)
+\usepackage[T1]{fontenc}
+\usepackage[sfdefault,lf]{carlito}
+\usepackage{lmodern}
+\renewcommand*\familydefault{\sfdefault}
+
+\usepackage{amsmath}
+\usetikzlibrary{positioning,calc,arrows.meta,decorations.pathreplacing}
+
+% ===== Parameter =====
+\def\imgW{3.0}
+\def\imgH{1.6}
+\def\funW{2.65}
+
+\pgfmathsetmacro{\boxW}{16.2}
+\pgfmathsetmacro{\boxH}{8.8}
+
+% Linienstärken
+\def\imgFrameLW{1.0pt}
+\def\boxLW{1.0pt}
+
+\begin{document}
+\begin{tikzpicture}[
+  >={Latex[length=3mm]},
+  every node/.style = {font=\tiny},
+  imgframe/.style={
+    draw=black,
+    line width=\imgFrameLW,
+    inner sep=0pt,
+    minimum width=\imgW cm,
+    minimum height=\imgH cm,
+    fill=gray!10,
+    align=center,
+    rounded corners=2pt
+  },
+  bigbox/.style={
+    draw=green!60!black,
+    fill=green!60!black,
+    fill opacity=0.16,
+    rounded corners=8pt,
+    line width=\boxLW,
+    inner sep=8pt
+  },
+  fun/.style={
+    draw=black,
+    rounded corners=3pt,
+    line width=0.75pt,
+    fill=white,
+    fill opacity=0.97,
+    text opacity=1,
+    minimum height=8.5mm,
+    align=center,
+    font=\tiny\bfseries,
+    minimum width=\funW cm
+  },
+  model/.style={
+    draw=black,
+    rounded corners=8pt,
+    line width=0.8pt,
+    fill=blue!22,
+    fill opacity=0.95,
+    text opacity=1,
+    minimum height=9.5mm,
+    minimum width=3.4cm,
+    align=center,
+    font=\tiny\bfseries
+  },
+  emph/.style={
+    draw=black,
+    rounded corners=3pt,
+    line width=0.8pt,
+    fill=orange!18,
+    fill opacity=0.95,
+    text opacity=1,
+    minimum height=8.5mm,
+    align=center,
+    font=\tiny\bfseries,
+    minimum width=2.8cm
+  },
+  smooth/.style={
+    draw=black,
+    rounded corners=3pt,
+    line width=0.8pt,
+    fill=teal!16,
+    fill opacity=0.95,
+    text opacity=1,
+    minimum height=8.5mm,
+    align=center,
+    font=\tiny\bfseries,
+    minimum width=3.0cm
+  },
+  flow/.style={-Latex, line width=0.9pt},
+  altflow/.style={-Latex, line width=0.8pt, dashed, color=black!75},
+  feedback/.style={-Latex, line width=0.85pt, rounded corners=10pt},
+  flowlabel/.style={midway, fill=white, inner sep=1pt, font=\tiny}
+]
+
+% =================================================
+% LINKE SEITE: EINGÄNGE
+% =================================================
+\node[imgframe] (ref) at (0, 2.4) {Referenz\\Keypoints};
+\node[above=2pt of ref, anchor=south, font=\scriptsize] {Soll-Merkmale};
+
+\node[imgframe] (cam) at (0,-2.4) {Kamera /\\aktuelles Bild};
+\node[below=2pt of cam, anchor=north, font=\scriptsize] {Ist-Beobachtung};
+
+% =================================================
+% MITTE: HAUPTBOX
+% =================================================
+\node[bigbox, anchor=west, minimum width=\boxW cm, minimum height=\boxH cm] (ctrlBox)
+  at (3.0,-0.15) {};
+
+\node[font=\bfseries, anchor=north, text=black]
+  at ([yshift=-4pt]ctrlBox.north) {Regelung und Merkmalsverarbeitung};
+
+% Bereichstitel
+\node[font=\scriptsize\bfseries, text=black!70, anchor=north west]
+  at ([xshift=0.9cm,yshift=-0.5cm]ctrlBox.north west) {Merkmalsverarbeitung};
+
+\node[font=\scriptsize\bfseries, text=black!70, anchor=north east]
+  at ([xshift=-0.9cm,yshift=-0.5cm]ctrlBox.north east) {Regelung};
+
+% leichte Trennlinie innerhalb der Hauptbox
+\draw[black!25, line width=0.5pt]
+  ([xshift=0.9cm,yshift=-1.05cm]ctrlBox.north west) --
+  ([xshift=-0.9cm,yshift=-1.05cm]ctrlBox.north east);
+
+% -------------------------------------------------
+% Obere Reihe: Wahrnehmung und Fehler
+% -------------------------------------------------
+\node[fun]  (detect) at (5.3, 2.15) {Keypoint\\Detection};
+\node[fun]  (match)  at (8.3, 2.15) {Feature\\Matching};
+\node[fun]  (switch) at (11.3,2.15) {Confidence\\\& Switching};
+\node[emph] (error)  at (14.4,2.15) {Bildfehler};
+
+% -------------------------------------------------
+% Untere Reihe: Vorhersage und Regelung
+% -------------------------------------------------
+\node[model]  (pred)   at (11.3,0.05) {Modellbasierte\\Keypoint-Vorhersage};
+\node[fun]    (ibvs)   at (14.4,0.05) {IBVS-\\Regler};
+\node[smooth] (smooth) at (17.6,0.05) {Glättung /\\Begrenzung};
+\node[fun]    (twist)  at (20.8,0.05) {Twist-\\Transformation};
+
+% =================================================
+% RECHTE SEITE: AUSGANG / STRECKE
+% =================================================
+\node[imgframe, minimum width=3.2cm, minimum height=1.65cm] (robot)
+  at (24.5, 0.95) {Roboterarm};
+\node[above=2pt of robot, anchor=south, font=\scriptsize] {Ausgang};
+
+\node[imgframe, minimum width=3.2cm, minimum height=1.65cm] (scene)
+  at (24.5,-2.1) {Szene / Objekt};
+\node[below=2pt of scene, anchor=north, font=\scriptsize] {Rückkopplung};
+
+% =================================================
+% HAUPTFLUSS
+% =================================================
+\draw[flow] (cam.east) -- (detect.west);
+\draw[flow] (detect.east) -- (match.west);
+\draw[flow] (match.east) -- (switch.west);
+\draw[flow] (switch.east) -- (error.west);
+
+\draw[flow] (error.south) -- (ibvs.north);
+\draw[flow] (ibvs.east) -- (smooth.west);
+\draw[flow] (smooth.east) -- (twist.west);
+\draw[flow] (twist.east) -- (robot.west);
+
+% =================================================
+% REFERENZPFADE
+% =================================================
+% Referenz -> Matching
+\coordinate (rA) at ($(ref.east)+(0.9,0)$);
+\draw[flow] (ref.east) -- (rA) |- (match.north);
+
+% Referenz -> Bildfehler
+\coordinate (rB) at ($(ref.east)+(0.45,0)$);
+\draw[flow] (ref.east) -- (rB) |- (error.north);
+
+% =================================================
+% MODELLBASIERTE UNTERSTUETZUNG
+% =================================================
+% Prediction -> Switching
+\draw[flow] (pred.north) -- (switch.south);
+
+% Matching -> Prediction
+\coordinate (mA) at ($(match.south)+(0,-0.45)$);
+\draw[altflow] (match.south) -- (mA) -| (pred.west)
+  node[flowlabel, pos=0.28, left] {Tracks};
+
+% Roboterbewegung -> Prediction
+\coordinate (rbA) at ($(robot.west)+(-0.9,0)$);
+\draw[altflow] (robot.west) -- (rbA) |- (pred.east)
+  node[flowlabel, pos=0.30, right] {Bewegung};
+
+% =================================================
+% STRECKE UND OPTISCHE RUECKKOPPLUNG
+% =================================================
+\draw[flow] (robot.south) -- (scene.north);
+
+\coordinate (fbA) at ($(scene.west)+(-1.25,0)$);
+\coordinate (fbB) at ($(cam.south)+(0,-0.55)$);
+\draw[feedback] (scene.west) -- (fbA) |- (fbB) -| (cam.south);
+
+% =================================================
+% OPTIONALE FEINE VISUELLE HILFEN
+% =================================================
+% dezente Gruppierung unten
+\node[font=\scriptsize, text=black!65] at (11.3,-0.95) {Vorhersage};
+\node[font=\scriptsize, text=black!65] at (17.6,-0.95) {Stellgrößenaufbereitung};
+
+\end{tikzpicture}
+\end{document}

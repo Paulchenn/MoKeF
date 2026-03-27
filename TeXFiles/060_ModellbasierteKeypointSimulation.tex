@@ -1,7 +1,121 @@
-\chapter{Modellbasierte Keypoint Simulation}
-\label{ch:ModellbasierteKeypointSimulation}
+\chapter{Modellbasierte Keypoint-Vorhersage}
+\label{chap:modellbasierte_keypoint_vorhersage}
 
-\section{Motivation}
-\label{sec:Motivation}
+Dieses Kapitel beschreibt die modellbasierte Vorhersage von Keypoints als zentrale Ergänzung zur rein bildbasierten Merkmalsverarbeitung. Ziel ist es, die erwarteten Bildpositionen relevanter Merkmale aus der bekannten Roboterbewegung und einem mathematischen Zustandsmodell abzuleiten. Dadurch kann der Regelkreis auch dann mit plausiblen Merkmalslagen arbeiten, wenn reale Keypoints aufgrund von Reflexionen, Überbelichtung oder kurzzeitiger Verdeckung instabil oder vorübergehend nicht sichtbar sind.
 
+Im Gegensatz zu einer klassischen 3D-Simulation basiert der in dieser Arbeit verwendete Ansatz nicht auf einem vollständigen geometrischen Objektmodell, sondern auf einer kompakten Zustandsbeschreibung im Bildraum. Die Vorhersage erfolgt durch zeitdiskrete Fortschreibung der Merkmalspositionen unter Verwendung der Kamerabewegung und der \ac{IBVS}-Zusammenhänge. Die modellbasierten Merkmale bilden damit eine zweite Informationsquelle neben den direkt gemessenen Bildpunkten.
+
+\section{Motivation der modellbasierten Vorhersage}
+\label{sec:motivation_modellbasierte_vorhersage}
+
+In industriellen Bildverarbeitungsanwendungen können reale Merkmale durch Reflexionen, Blendung oder Okklusionen vorübergehend unzuverlässig werden. Insbesondere bei metallischen oder stark reflektierenden Oberflächen entstehen Situationen, in denen Keypoints an erwarteten Bildpositionen nicht oder nur instabil detektiert werden. Für einen \ac{IBVS}-Regelkreis ist dies problematisch, da die Stellgröße direkt von der Verfügbarkeit und Qualität der Bildmerkmale abhängt.
+
+Aus diesem Grund wird in der vorliegenden Arbeit eine modellbasierte Vorhersage eingesetzt, die erwartete Keypoint-Positionen aus der bekannten Roboterbewegung ableitet. Die Grundidee besteht darin, dass das System neben den realen Bildpunkten auch vorhergesagte Merkmalslagen bereitstellt. Diese können entweder direkt zur Stabilisierung der Filterung verwendet oder später in die Entscheidungs- und Switching-Logik eingebunden werden. Die modellbasierte Vorhersage dient somit nicht als Ersatz der Wahrnehmung, sondern als robuste Ergänzung bei unsicheren Beobachtungen.
+
+\section{Nutzung der Roboterbewegung und Kamerakinematik}
+\label{sec:nutzung_roboterbewegung_kamerakinematik}
+
+Grundlage der Vorhersage ist die Annahme, dass die aktuelle Bewegung des Roboters bekannt ist. Im implementierten System wird hierzu ein kartesischer Geschwindigkeitsvektor aus dem Robotercontroller eingelesen. Dieser liegt zunächst im Basisrahmen des Roboters vor und wird anschließend unter Verwendung der bekannten \ac{TF}-Beziehungen in den Kamerarahmen transformiert. Dabei werden sowohl die Rotation zwischen Basis-, \ac{TCP}- und Kamerarahmen als auch der Hebelarm zwischen \ac{TCP} und Kamera berücksichtigt.
+
+Der resultierende kamerabezogene Geschwindigkeitsvektor wird als
+\begin{equation}
+\mathbf{v}_{\mathrm{cam}} =
+\begin{bmatrix}
+v_x & v_y & v_z & \omega_x & \omega_y & \omega_z
+\end{bmatrix}^{\top}
+\end{equation}
+beschrieben und bildet die Eingangsgröße des Vorhersagemodells. Falls die Geschwindigkeitsinformation nicht verfügbar, veraltet oder die notwendige \ac{TF}-Transformation nicht auflösbar ist, wird in der Implementierung auf einen Nullvektor zurückgegriffen. Dies verhindert unkontrollierte Vorhersagesprünge und stellt sicher, dass die Modellvorhersage in solchen Fällen konservativ bleibt.
+
+\section{Mathematisches Bewegungsmodell der Bildmerkmale}
+\label{sec:mathematisches_bewegungsmodell_bildmerkmale}
+
+Die modellbasierte Vorhersage wird direkt im Bildraum formuliert. Der Zustand des Vorhersagemodells besteht aus den aktuellen Pixelkoordinaten einer aktiven Teilmenge von Keypoints. Für \(n\) aktive Merkmale kann der Zustandsvektor als
+\begin{equation}
+\mathbf{x} =
+\begin{bmatrix}
+u_1 & v_1 & u_2 & v_2 & \dots & u_n & v_n
+\end{bmatrix}^{\top}
+\end{equation}
+geschrieben werden.
+
+Für die Berechnung der Bewegung im Bildraum werden die Pixelkoordinaten zunächst mit den Kameraintrinsiken in normierte Bildkoordinaten überführt. Dies erfolgt in der Implementierung mithilfe der inversen Kameramatrix \(\mathbf{K}^{-1}\). Für ein Merkmal mit Pixelkoordinaten \((u_i,v_i)\) ergibt sich
+\begin{equation}
+\begin{bmatrix}
+x_i \\ y_i \\ 1
+\end{bmatrix}
+=
+\mathbf{K}^{-1}
+\begin{bmatrix}
+u_i \\ v_i \\ 1
+\end{bmatrix}.
+\end{equation}
+
+Auf dieser Grundlage wird für jedes Merkmal eine punktweise Interaction Matrix gebildet. Für ein einzelnes Merkmal mit normierten Koordinaten \((x_i,y_i)\) und Tiefe \(Z_i\) gilt
+\begin{equation}
+\mathbf{L}_i =
+\begin{bmatrix}
+-\frac{1}{Z_i} & 0 & \frac{x_i}{Z_i} & x_i y_i & -(1+x_i^2) & y_i \\
+0 & -\frac{1}{Z_i} & \frac{y_i}{Z_i} & 1+y_i^2 & -x_i y_i & -x_i
+\end{bmatrix}.
+\end{equation}
+
+Damit ergibt sich die normierte Bildgeschwindigkeit des \(i\)-ten Merkmals zu
+\begin{equation}
+\dot{\mathbf{s}}_i = \mathbf{L}_i \, \mathbf{v}_{\mathrm{cam}}.
+\end{equation}
+
+Anschließend wird diese wieder auf Pixelkoordinaten skaliert, sodass für alle aktiven Merkmale ein Gesamtvektor \(\dot{\mathbf{x}}\) der vorhergesagten Pixelgeschwindigkeiten entsteht. In der implementierten C++-Filterarchitektur erfolgt diese Berechnung für alle unterstützten Filtervarianten über dieselbe Grundfunktion zur Bestimmung der Pixelgeschwindigkeiten.
+
+\section{Zeitdiskrete Vorhersage der Keypoint-Positionen}
+\label{sec:zeitdiskrete_vorhersage_keypoint_positionen}
+
+Die Vorhersage der Keypoint-Positionen erfolgt zeitdiskret. Ausgehend vom aktuellen Zustandsvektor \(\mathbf{x}_k\) und dem zugehörigen Geschwindigkeitsvektor \(\dot{\mathbf{x}}_k\) wird der nächste Zustand mit
+\begin{equation}
+\mathbf{x}_{k+1} = \mathbf{x}_k + \dot{\mathbf{x}}_k \, \Delta t
+\end{equation}
+fortgeschrieben. Die Zeitdifferenz \(\Delta t\) wird aus der tatsächlich vergangenen Zeit zwischen zwei Vorhersageschritten bestimmt. Falls diese Zeitdifferenz ungültig oder ungewöhnlich groß ist, wird in der Implementierung auf die inverse Vorhersagerate als Ersatzwert zurückgegriffen. Dadurch bleibt der Prädiktionsschritt auch bei unregelmäßigem Timing numerisch stabil.
+
+Je nach verwendetem Filtertyp wird dieser Grundschritt unterschiedlich in die jeweilige Schätzgleichung eingebettet. Beim \ac{EKF} wird beispielsweise ein linearisiertes Zustandsübergangsmodell verwendet, während der \ac{UKF} die Prädiktion über Sigma-Punkte realisiert. Unabhängig von der konkreten Filtervariante bleibt jedoch die zugrunde liegende Bildpunktdynamik identisch: Die Veränderung der Merkmalspositionen wird aus der Interaction Matrix und der kamerabezogenen Bewegung berechnet.
+
+\section{Tiefenmodell und Tiefenfortschreibung}
+\label{sec:tiefenmodell_tiefenfortschreibung}
+
+Da die Interaction Matrix explizit von der Tiefe der Merkmale abhängt, ist die Vorhersage auf Tiefenwerte pro Keypoint angewiesen. Liegen gültige Tiefenmessungen vor, werden diese direkt verwendet. Für Merkmale ohne verlässliche Tiefenmessung greift die Implementierung auf einen Fallback-Wert \(Z_{\mathrm{fallback}}\) zurück. Auf diese Weise bleibt die Vorhersage auch dann definiert, wenn einzelne Tiefenmessungen fehlen oder außerhalb gültiger Grenzen liegen.
+
+Zusätzlich enthält die C++-Node eine modellbasierte Tiefenfortschreibung. Für ein Merkmal mit normierten Koordinaten \((x_i,y_i)\), Tiefe \(Z_i\) und kamerabezogener Geschwindigkeit wird die Tiefenänderung gemäß
+\begin{equation}
+\dot{Z}_i = -v_z + Z_i \left( \omega_y x_i - \omega_x y_i \right)
+\end{equation}
+berechnet. Daraus ergibt sich für den nächsten Zeitschritt
+\begin{equation}
+Z_{i,k+1} = Z_{i,k} + \dot{Z}_i \, \Delta t.
+\end{equation}
+
+Der vorhergesagte Tiefenwert wird anschließend auf einen zulässigen Bereich begrenzt. Diese Tiefenfortschreibung verbessert die Konsistenz des Modells, da nicht nur die Bildlage, sondern auch die zugrunde liegende Merkmaltiefe zeitlich mitgeführt wird.
+
+\section{Aktive Keypoint-Menge und geometrische Konsistenz}
+\label{sec:aktive_keypoint_menge_geometrische_konsistenz}
+
+Die modellbasierte Vorhersage arbeitet nicht notwendigerweise auf allen verfügbaren Referenzmerkmalen, sondern auf einer aktiven Teilmenge. Diese aktive Menge wird innerhalb der Basisklasse des Filters verwaltet und über Parameter wie die maximale Anzahl aktiver Keypoints sowie Mindestanzahlen für Initialisierung und Update begrenzt. Dadurch wird zum einen die Zustandsdimension kontrolliert, zum anderen wird verhindert, dass der Filter bei zu wenigen oder ungeeigneten Beobachtungen in einen instabilen Zustand übergeht.
+
+Ein weiterer wichtiger Aspekt ist die geometrische Konsistenz der vorhergesagten Merkmale. In der Implementierung wird hierzu geprüft, ob aus den aktuellen aktiven Punkten eine sinnvolle Homographie zwischen gewünschter und gefilterter Merkmalslage berechnet werden kann. Erst wenn diese Geometrieprüfung erfolgreich ist, wird die aktualisierte Merkmalsschätzung übernommen. Auf diese Weise wird vermieden, dass numerisch mögliche, aber geometrisch inkonsistente Zustände in den weiteren Regelbetrieb eingehen.
+
+\section{Zusammenspiel von Vorhersage und Messupdate}
+\label{sec:zusammenspiel_vorhersage_messupdate}
+
+Die modellbasierte Keypoint-Vorhersage bildet nur einen Teil des gesamten Schätzzyklus. Nach dem Prädiktionsschritt werden aktuelle Matches aus der Wahrnehmung als Messgröße eingebracht. Das bedeutet, dass die modellierte Bewegung der Merkmale nicht isoliert verwendet wird, sondern kontinuierlich mit realen Beobachtungen abgeglichen wird. Die Vorhersage liefert dabei die erwartete Lage der Merkmale, während das Messupdate Abweichungen korrigiert und auf diese Weise Drift begrenzt.
+
+Das Messupdate erfolgt in der implementierten Architektur nur für diejenigen Merkmale, die zur aktiven Menge gehören und die vorgesehenen Gating- und Konsistenzkriterien erfüllen. Auf diese Weise wird verhindert, dass starke Ausreißer oder geometrisch unplausible Beobachtungen die Vorhersage destabilisieren. Gerade bei reflektierenden Objekten ist dieses Zusammenspiel aus Vorhersage und selektivem Update von zentraler Bedeutung, da reale Bildinformationen zwar wertvoll, aber nicht jederzeit zuverlässig sind.
+
+\section{Einordnung in das Gesamtsystem}
+\label{sec:einordnung_vorhersage_gesamtsystem}
+
+Im Gesamtsystem übernimmt die modellbasierte Keypoint-Vorhersage die Rolle einer stabilisierenden Zwischenschicht zwischen Merkmalsabgleich und Regelung. Die C++-Filter-Node empfängt Referenzmerkmale, aktuelle Matches, Kamerainformationen sowie die Roboterbewegung und publiziert daraus gefilterte beziehungsweise vorhergesagte Merkmalslagen. Diese stehen anschließend dem Regler als alternative oder bevorzugte Merkmalsquelle zur Verfügung. Parallel dazu können sie auch für weitere Matching-Mechanismen, etwa lokale Wiederfindungsstrategien, genutzt werden.
+
+Damit ist die modellbasierte Vorhersage kein isoliertes Hilfsmodul, sondern ein zentrales Bindeglied zwischen Wahrnehmung und Regelung. Sie ermöglicht es, die bekannten Bewegungsinformationen des Roboters in den Bildraum zu überführen und dort als robuste Zusatzinformation für den visuellen Regelkreis nutzbar zu machen.
+
+\section{Zusammenfassung}
+\label{sec:zusammenfassung_modellbasierte_vorhersage}
+
+Zusammenfassend basiert die modellbasierte Keypoint-Vorhersage in dieser Arbeit auf einem zeitdiskreten Zustandsmodell im Bildraum. Ausgangspunkt sind die aktiven Pixelkoordinaten der Merkmale, deren Veränderung über die punktweise Interaction Matrix und den in den Kamerarahmen transformierten Geschwindigkeitsvektor des Roboters berechnet wird. Durch die zusätzliche Berücksichtigung von Tiefeninformationen, einer aktiven Keypoint-Auswahl, geometrischer Konsistenzprüfungen sowie der anschließenden Korrektur durch reale Messungen entsteht ein robuster Vorhersagemechanismus für Merkmalspositionen. Dieser bildet die Grundlage dafür, den visuellen Regelkreis auch unter instabilen Beobachtungsbedingungen aufrechtzuerhalten.
 %% End of File %%
