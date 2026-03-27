@@ -7,18 +7,18 @@ Diese Konzepte bilden die Basis für die im weiteren Verlauf der Arbeit vorgeste
 \section{Bildbasierte Roborerregelung (IBVS)}
 \label{sec:BildbasierteRoborerregelung}
 
-Visual Servoing bezeichnet eine Klasse von Regelungsverfahren, bei denen visuelle Informationen aus Kamerabildern zur Steuerung eines Roboters verwendet werden. Ziel ist es, die Bewegung des Roboters so zu regeln, dass bestimmte visuelle Merkmale eine gewünschte Position im Kamerabild erreichen. \cite{chaumette2006visual1}
+Visual Servoing bezeichnet eine Klasse von Regelungsverfahren, bei denen visuelle Informationen aus Kamerabildern zur Steuerung eines Roboters verwendet werden. Ziel ist es, die Bewegung des Roboters so zu regeln, dass bestimmte visuelle Merkmale eine gewünschte Position im Kamerabild erreichen. \cite{chaumette2006visual}
 
 Grundsätzlich lassen sich zwei Hauptansätze des Visual Servoing unterscheiden:
 \begin{itemize}
 	\item \acl{PBVS}
 	\item \acl{IBVS}
 \end{itemize}
-Beim \ac{PBVS} wird zunächst die vollständige Pose des Objekts im dreidimensionalen Raum geschätzt. Anschließend wird aus dieser Pose eine Roboterbewegung berechnet. \cite{chaumette2006visual1}
+Beim \ac{PBVS} wird zunächst die vollständige Pose des Objekts im dreidimensionalen Raum geschätzt. Anschließend wird aus dieser Pose eine Roboterbewegung berechnet. \cite{chaumette2006visual}
 
-Beim \ac{IBVS} hingegen erfolgt die Regelung direkt im Bildraum. Dabei werden Bildmerkmale wie Punkte, Linien oder Konturen als Referenzgrößen verwendet. Der Roboter wird so gesteuert, dass sich die Position dieser Merkmale im Kamerabild einer gewünschten Zielposition annähert. \cite{chaumette2006visual1, corke2017robotics}
+Beim \ac{IBVS} hingegen erfolgt die Regelung direkt im Bildraum. Dabei werden Bildmerkmale wie Punkte, Linien oder Konturen als Referenzgrößen verwendet. Der Roboter wird so gesteuert, dass sich die Position dieser Merkmale im Kamerabild einer gewünschten Zielposition annähert. \cite{chaumette2006visual, corke2017robotics}
 
-Der Vorteil von \ac{IBVS} besteht darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Dadurch kann das Verfahren oft robuster gegenüber Modellierungsfehlern sein. \cite{chaumette2006visual1}
+Der Vorteil von \ac{IBVS} besteht darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Dadurch kann das Verfahren oft robuster gegenüber Modellierungsfehlern sein. \cite{chaumette2006visual}
 
 Der grundlegende Regelkreis von \ac{IBVS} besteht aus folgenden Schritten:
 \begin{itemize}
@@ -27,7 +27,7 @@ Der grundlegende Regelkreis von \ac{IBVS} besteht aus folgenden Schritten:
 	\item Berechnung des Bildfehlers zwischen aktueller und gewünschter Featureposition
 	\item Berechnung einer Roboterbewegung zur Minimierung dieses Fehlers
 \end{itemize}
-Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Position eines Features im Bild und seiner gewünschten Zielposition definiert. \cite{chaumette2006visual1}
+Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Position eines Features im Bild und seiner gewünschten Zielposition definiert. \cite{chaumette2006visual}
 
 \section{Interaction Matrix und Image Jacobian}
 \label{sec:InteractionMatrixundImageJacobian}
@@ -35,7 +35,7 @@ Ein zentrales Element von \ac{IBVS} ist die sogenannte Interaction Matrix, auch 
 
 Die Interaction Matrix stellt eine lineare Beziehung zwischen der Geschwindigkeit der Kamera und der zeitlichen Änderung der Featurepositionen im Bild her.
 
-Mathematisch kann dieser Zusammenhang wie folgt beschrieben werden: \cite{chaumette2006visual1}
+Mathematisch kann dieser Zusammenhang wie folgt beschrieben werden: \cite{chaumette2006visual}
 \begin{equation}
 \dot{s} = L_s \cdot v_c
 \end{equation}
@@ -49,14 +49,14 @@ Dabei gilt:
 
 Der Geschwindigkeitsvektor enthält sowohl translatorische als auch rotatorische Bewegungen der Kamera.
 
-Die Interaction Matrix hängt von mehreren Faktoren ab: \cite{chaumette2006visual1}
+Die Interaction Matrix hängt von mehreren Faktoren ab: \cite{chaumette2006visual}
 \begin{listAlph}
 	\item der aktuellen Position der Features im Bild
 	\item der Tiefe der Features im Raum
 	\item den Kameraparametern
 \end{listAlph}
 
-Um den Roboter zu steuern, wird üblicherweise eine Pseudoinverse der Interaction Matrix verwendet. Der typische \ac{IBVS}-Regler lautet: \cite{chaumette2006visual1}
+Um den Roboter zu steuern, wird üblicherweise eine Pseudoinverse der Interaction Matrix verwendet. Der typische \ac{IBVS}-Regler lautet: \cite{chaumette2006visual}
 \begin{equation}
 	\mathbf{v}_c = -\lambda \mathbf{L}_e^{+} (\mathbf{s}^* - \mathbf{s})
 \end{equation}
@@ -69,7 +69,7 @@ Dabei gilt:
 	\item $\mathbf{L}_e^{+}$ : Pseudoinverse der Interaction Matrix
 \end{listNorm}
 
-Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, bis die Features ihre gewünschte Position erreicht haben. \cite{chaumette2006visual1}
+Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, bis die Features ihre gewünschte Position erreicht haben. \cite{chaumette2006visual}
 
 \section{Keypoint Detection und Feature Matching}
 \label{sec:KeypointDetectionundFeatureMatching}
@@ -120,7 +120,7 @@ Daher werden in vielen modernen Visual-Servoing-Systemen zusätzliche Strategien
 
 Um temporäre Ausfälle von Bildmerkmalen zu kompensieren, können Zustandsmodelle verwendet werden. Ein Zustandsmodell beschreibt die erwartete Entwicklung eines Systems über die Zeit \cite{thrun2005probabilistic}.
 
-Im Kontext von Visual Servoing kann ein solches Modell verwendet werden, um die zukünftige Position eines Features im Bild vorherzusagen. Grundlage dafür ist häufig die bekannte Bewegung des Roboters oder der Kamera \cite{chaumette2006visual1, chaumette2007visual2}.
+Im Kontext von Visual Servoing kann ein solches Modell verwendet werden, um die zukünftige Position eines Features im Bild vorherzusagen. Grundlage dafür ist häufig die bekannte Bewegung des Roboters oder der Kamera \cite{chaumette2006visual, chaumette2007visual2}.
 
 Ein einfaches Beispiel ist ein Bewegungsmodell, das davon ausgeht, dass sich ein Feature mit konstanter Geschwindigkeit bewegt. In diesem Fall kann die zukünftige Featureposition aus der aktuellen Position und der geschätzten Geschwindigkeit berechnet werden \cite{welch1995kalman}.
 
