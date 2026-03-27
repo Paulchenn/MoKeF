@@ -84,11 +84,11 @@ Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
 Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden folgende Komponenten begründet ausgeschlossen:
 
 \begin{listNorm}
-    \item \textbf{Ausschluss des SKF:} Der Standard \ac{KF} setzt ein lineares System- und Messmodell voraus. Da die perspektivische Projektion der Kamera sowie die Roboterkinematik inhärent nichtlinear sind, ist der SKF für ein präzises Feature-Tracking im Bildraum ungeeignet und wird durch seine nichtlinearen Erweiterungen (\ac{EKF}/\ac{UKF}) ersetzt. \todo[author=Paul]{QUELLE!!}
+    \item \textbf{Ausschluss des SKF:} Der Standard \ac{KF} setzt ein lineares System- und Messmodell voraus~\cite{kalman1960new}. Da die perspektivische Projektion der Kamera sowie die Roboterkinematik inhärent nichtlinear sind, führt die notwendige Linearisierung bei starken Bewegungen zu signifikanten Fehlern in der Zustandsschätzung~\cite{thrun2005probabilistic}. Während der SKF für lineare Probleme optimal ist, ist er für das präzise Feature-Tracking im Bildraum ungeeignet und wird daher durch seine nichtlinearen Erweiterungen (\ac{EKF}/\ac{UKF}/\ac{ESKF}) ersetzt, welche die Nichtlinearitäten durch lokale Linearisierung, die Unscented Transform handhaben oder Fehlerzustands-Filterung ermöglichen~\cite{julier1997new}.
     
-    \item \textbf{Ausschluss des 1\euro{}-Filters:} Dieser Filter fungiert als adaptiver Tiefpass auf Signalebene. Da er über kein internes physikalisches Modell verfügt, kann er während einer vollständigen Okklusion (Blindphasen) keine Prädiktion liefern, was für die Stabilität des \ac{IBVS}-Regelkreises in den gewählten Szenarien essenziell ist. \todo[author=Paul]{QUELLE!!}
+    \item \textbf{Ausschluss des 1\euro{}-Filters:} Dieser Filter fungiert als adaptiver Tiefpass auf Signalebene~\cite{casiez20121euro}. Da er ausschließlich auf den zeitlichen Ableitungen des Eingangssignals operiert und über kein internes physikalisches Modell des Prozesses verfügt, ist er prinzipbedingt nicht in der Lage, während einer vollständigen Okklusion (Blindphasen) eine Prädiktion der Feature-Trajektorie zu liefern. Für die Aufrechterhaltung der Stabilität des \ac{IBVS}-Regelkreises in dynamischen Szenarien ist eine modellbasierte Schätzung jedoch essenziell, weshalb dieser Filtertyp für die untersuchten Extrembedingungen nicht berücksichtigt wird~\cite{casiez20121euro}.
     
-    \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist hinreichend belegt. Ziel dieser Arbeit ist die Robustheit unter Extrembedingungen. Szenario I wird daher als trivial eingestuft und nicht weiter evaluiert, um den Fokus auf die Fehlerbehandlung in den Szenarien II bis IV zu legen. \todo[author=Paul]{QUELLE!!}
+    \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist in der Literatur hinreichend dokumentiert~\cite{chaumette2006visual, chaumette2007visual2}. Ziel dieser Arbeit ist die Evaluation der Robustheit unter industriellen Störbedingungen (Edge Cases). Da Szenario I keine Herausforderung für die Filter- und Entscheidungslogik darstellt und keine Differenzierung der Algorithmen ermöglicht, wird es als trivial eingestuft. Der Fokus liegt stattdessen auf der Belastbarkeit und Fehlertoleranz in den Szenarien II bis IV, um die Resilienz des Systems gegenüber unvorhergesehenen Umgebungsänderungen zu quantifizieren \cite{marchand2002virtual}.
 \end{listNorm}
 
 \subsection{Design of Experiments (DoE)}
@@ -168,7 +168,6 @@ Hinsichtlich des Versuchsablaufs wird für jede der 90 Kombinationen zu Beginn e
 Die Bewertung erfolgt anhand dreier Hauptkriterien:
 \begin{enumerate}
     \item \textbf{Regelungsgenauigkeit (\ac{IBVS}-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten:
-    \todo[inline, author=Tim]{Stimmt die Formel?}
     \begin{equation}
         E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
     \end{equation}
