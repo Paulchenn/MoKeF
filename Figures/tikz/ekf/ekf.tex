@@ -1,121 +1,98 @@
 \documentclass[tikz, border=10pt]{standalone}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+\usepackage{amssymb}
+\usepackage[fleqn,reqno]{amsmath}
+\usepackage{mathtools}
 
 \begin{document}
 
 \begin{tikzpicture}[
-    node distance=1.0cm and 1.5cm,
+    node distance=0.8cm and 1cm,
     auto,
-    % --- STILDEFINITIONEN (MIT FARBEN) ---
-    % Berechnungsschritte und Titel (Abgerundete Ecken, Blau)
-    block_col/.style={
-        rectangle, draw, thick, fill=blue!5, 
-        rounded corners=0.1cm,
-        text width=6.5cm, align=center, minimum height=1cm
-    },
-    % Titel-Blöcke (Kleiner, Blau)
-    title_col/.style={
-        rectangle, draw, thick, fill=blue!5, 
-        rounded corners=0.1cm,
-        text width=5.5cm, align=center, minimum height=0.8cm
-    },
-    % Spezialisierte Update-Blöcke (wie 'Skip', schmaler, Blau)
-    skip_col/.style={
-        rectangle, draw, thick, fill=blue!5, 
-        rounded corners=0.1cm,
-        text width=4cm, align=center, minimum height=1cm
-    },
-    % Entscheidungs-Rauten (Gelb)
-    decision_col/.style={
-        diamond, draw, thick, fill=yellow!5, 
-        text width=3cm, align=center, inner sep=0pt, aspect=1.5
-    },
-    % Start & Ausgabe (Abgerundete Ecken, Orange)
-    startstop_col/.style={
-        rectangle, draw, thick, fill=orange!10, 
-        rounded corners=0.4cm, text width=5cm, align=center, minimum height=0.8cm
-    },
-    % Pfeilstil
-    line_style/.style={
-        draw, -Stealth, thick
-    }
+    block/.style={rectangle, draw, fill=blue!5, text width=6.5cm, align=center, rounded corners, minimum height=1cm},
+    io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw, fill=orange!10, text width=6cm, align=center, minimum height=1cm},
+    decision/.style={diamond, aspect=2, draw, fill=yellow!20, text width=3.5cm, align=center, inner sep=0pt},
+    reject/.style={rectangle, draw, fill=red!10, text width=2.5cm, align=center, rounded corners, minimum height=1cm},
+    line/.style={draw, -Stealth, thick}
 ]
 
-% --- NODES ---
+% --- PRÄDIKTIONS-STRANG (Timer-basiert) ---
+\node [io] (timer) at (0,0) {
+    \textbf{Prädiktions-Schleife} \\ 
+    (Feste Frequenz, $dt$, Cam-Vel $v_{cam}$)
+};
 
-% Start
-\node [startstop_col] (start) {Start / Initialisierung};
+\node [block, below=of timer] (pred_state) {
+    \textbf{Zustand prädizieren} \\
+    $\dot{s} = \text{computePixelVelocities}(x_{prev}, v_{cam})$ \\
+    $x_{pred} = x_{prev} + \dot{s} \cdot dt$
+};
 
+\node [block, below=of pred_state] (pred_cov) {
+    \textbf{Kovarianz prädizieren} \\
+    Berechne Jacobi-Matrix $F_k$ \\
+    $P_{pred} = F_k \cdot P_{prev} \cdot F_k^T + Q$
+};
+
+\node [block, below=of pred_cov, fill=green!10] (save_pred) {
+    Bereitstellen für Update: \\ $x_{pred}, P_{pred}$
+};
+
+\node [io, below=of save_pred] (sys_out) {
+    \textbf{Systemausgabe} \\
+    Aktueller Zustand $x_{pred}$ \\ zur Weiterverarbeitung
+};
+
+% --- UPDATE-STRANG (Event-basiert) ---
+\node [io] (meas) at (8,0) {
+    \textbf{Update-Trigger} \\ 
+    (Asynchron bei Messung $z_k$)
+};
+
+\node [block, below=of meas] (innov) {
+    \textbf{Innovation} \\
+    $y = z_k - (H_{obs} \cdot x_{pred})$ \\
+    $S = H_{obs} \cdot P_{pred} \cdot H_{obs}^T + R$ \\
+    $d_M = \frac{y^T S^{-1} y}{\max(1, \dim(z_k))}$
+};
+
+\node [decision, below=of innov] (maha) {
+    $d_M \le gate\_thresh$?
+};
+
+\node [reject, right=1.5cm of maha] (reject) {
+    \textbf{Reject} \\ (Outlier)
+};
+
+\node [block, below=0.8cm of maha] (update) {
+    \textbf{Messupdate (Zustand)} \\
+    $K = P_{pred} \cdot H_{obs}^T \cdot S^{-1}$ \\
+    $x_{neu} = x_{pred} + K \cdot y$ \\
+    $P_{neu} = (I - K \cdot H_{obs}) \cdot P_{pred}$
+};
+
+\node [block, below=of update, fill=green!10] (save_upd) {
+    Zustand aktualisieren: \\ $x_{prev} = x_{neu}, P_{prev} = P_{neu}$
+};
+
+% --- PFEILE ---
 % Prädiktion
-\node [title_col, below=of start] (predict_title) {Prädiktion / Predict};
+\path [line] (timer) -- (pred_state);
+\path [line] (pred_state) -- (pred_cov);
+\path [line] (pred_cov) -- (save_pred);
+\path [line] (save_pred) -- (sys_out);
 
-\node [block_col, below=0.5cm of predict_title] (predict_eq) {
-    $x_{pred} = f(x, u)$ \\
-    Berechne Jacobi $F_k$ \\
-    $P_{pred} = F_k P F_k^T + Q$
-};
+% Update
+\path [line] (meas) -- (innov);
+\path [line] (innov) -- (maha);
+\path [line] (maha) -- node[above] {Nein} (reject);
+\path [line] (maha) -- node[right] {Ja} (update);
+\path [line] (update) -- (save_upd);
 
-% Entscheidung Messung
-\node [decision_col, below= of predict_eq] (new_meas) {Neue Messung $z$?};
-
-% Korrektur Zweig (Ja)
-\node [title_col, below left=1.0cm and -2.875cm of new_meas.south] (update_title) {Korrektur Update};
-
-\node [block_col, below=0.5cm of update_title] (residuum) {
-    Residuum $y = z - h x_{pred}$ \\
-    Berechne Mess-Jacobi $H_k$
-};
-
-% Entscheidung Mahalanobis
-\node [decision_col, below= of residuum] (maha_check) {Mahalanobis $<$ Schwelle?};
-
-% Update Zweig (Ja)
-\node [block_col, below left=1.0cm and -3.38cm of maha_check.south] (update_eq) {
-    $S = H_k P_{pred} H_k^T + R$ \\
-    $K = P_{pred} H_k^T S^{-1}$ \\
-    $x = x_{pred} + K y$ \\
-    $P = (I - K H_k) P_{pred}$
-};
-
-% Überspringen Zweig (Nein)
-\node [skip_col, right=3cm of maha_check] (skip_title) {Update überspringen};
-
-\node [skip_col, below=0.5cm of skip_title] (skip_eq) {
-    $x = x_{pred}$ \\
-    $P = P_{pred}$
-};
-
-% Ausgabe
-\node [startstop_col, below= of update_eq] (output) {Ausgabe $x, P$};
-
-% --- ARROWS ---
-
-% Hauptfluss oben
-\path [line_style] (start) -- (predict_title);
-\path [line_style] (predict_title) -- (predict_eq);
-\path [line_style] (predict_eq) -- (new_meas);
-
-% Messung Entscheidung
-\path [line_style] (new_meas.south) -- node[left, pos=0.3] {Ja} (update_title);
-\draw [line_style] (new_meas.east) -- node[below, pos=0.2] {Nein} ++(5.4,0) -- (skip_title.north);
-
-% Korrektur Fluss
-\path [line_style] (update_title) -- (residuum);
-\path [line_style] (residuum) -- (maha_check);
-
-% Mahalanobis Entscheidung
-\path [line_style] (maha_check.south) -- node[left, pos=0.3] {Ja} (update_eq.north);
-\path [line_style] (maha_check) -- node[below, pos=0.4] {Nein / Ausreißer} (skip_title);
-
-% Skip Fluss
-\path [line_style] (skip_title) -- (skip_eq);
-
-% Zusammenführung zur Ausgabe
-\path [line_style] (update_eq.south) -- (output.north);%++(0,-0.5) -|
-\draw [line_style] (skip_eq.south) -- ++(0,-2.75) -| ([xshift=1cm]output.north);
-
-% Loop zurück zur Prädiktion (Gestrichelt, wie beim 1€-Filter)
-\draw [line_style, dashed] (output.east) -- ++(7,0) |- (predict_title.east);
+% Datenfluss (Interaktion zwischen Asynchronen Loops)
+\draw [line, dashed, blue] (save_pred.east) -- ++(0.8,0) |- (innov.west) node[pos=0.25, above, rotate=90] {Nutze $x_{pred}, P_{pred}$};
+\draw [line, dashed, green!50!black] (save_upd.west) -- ++(-9,0) |- (timer.west) node[pos=0.25, above, rotate=90] {Neuer Startzustand};
 
 \end{tikzpicture}
 

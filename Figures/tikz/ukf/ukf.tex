@@ -1,0 +1,96 @@
+\documentclass[tikz, border=10pt]{standalone}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+\usepackage{amssymb}
+\usepackage[fleqn,reqno]{amsmath}
+\usepackage{mathtools}
+
+\begin{document}
+
+\begin{tikzpicture}[
+    node distance=0.8cm and 1cm,
+    auto,
+    block/.style={rectangle, draw, fill=blue!5, text width=6.5cm, align=center, rounded corners, minimum height=1cm},
+    io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw, fill=orange!10, text width=6cm, align=center, minimum height=1cm},
+    decision/.style={diamond, aspect=2, draw, fill=yellow!20, text width=3.5cm, align=center, inner sep=0pt},
+    reject/.style={rectangle, draw, fill=red!10, text width=2.5cm, align=center, rounded corners, minimum height=1cm},
+    line/.style={draw, -Stealth, thick}
+]
+
+% --- PRÄDIKTIONS-STRANG ---
+\node [io] (timer) at (0,0) {
+    \textbf{Prädiktions-Schleife} \\ 
+    (Feste Frequenz, $dt$, Cam-Vel $v_{cam}$)
+};
+
+\node [block, below=of timer] (sigmas) {
+    \textbf{Sigma-Punkte \& Propagierung} \\
+    $\Sigma = x_{prev} \pm \gamma \sqrt{P_{prev}}$ \\
+    $\Sigma_{pred, i} = \Sigma_i + \dot{s}(\Sigma_i) \cdot dt$
+};
+
+\node [block, below=of sigmas] (pred) {
+    \textbf{Zustand \& Kovarianz} \\
+    $x_{pred} = \sum W_{m,i} \cdot \Sigma_{pred, i}$ \\
+    $P_{pred} = \sum W_{c,i} \cdot (...) + Q$
+};
+
+\node [block, below=of pred, fill=green!10] (save_pred) {
+    Bereitstellen für Update: \\ $x_{pred}, P_{pred}$
+};
+
+\node [io, below=of save_pred] (sys_out) {
+    \textbf{Systemausgabe} \\
+    Aktueller Zustand $x_{pred}$ \\ zur Weiterverarbeitung
+};
+
+% --- UPDATE-STRANG ---
+\node [io] (meas) at (8,0) {
+    \textbf{Update-Trigger} \\ 
+    (Asynchron bei Messung $z_k$)
+};
+
+\node [block, below=of meas] (innov) {
+    \textbf{Innovation} \\
+    $y = z_k - (H_{obs} \cdot x_{pred})$ \\
+    $S = H_{obs} \cdot P_{pred} \cdot H_{obs}^T + R$ \\
+    $d_M = \frac{y^T S^{-1} y}{\max(1, \dim(z_k))}$
+};
+
+\node [decision, below=of innov] (nis_check) {
+    $d_M \le gate\_thresh$?
+};
+
+\node [reject, right=1.5cm of nis_check] (reject) {
+    \textbf{Reject} \\ (Outlier)
+};
+
+\node [block, below=0.8cm of nis_check] (update) {
+    \textbf{Messupdate (Zustand)} \\
+    $K = P_{pred} \cdot H_{obs}^T \cdot S^{-1}$ \\
+    $x_{neu} = x_{pred} + K \cdot y$ \\
+    $P_{neu} = (I - K \cdot H_{obs}) \cdot P_{pred}$
+};
+
+\node [block, below=of update, fill=green!10] (save_upd) {
+    Zustand aktualisieren: \\ $x_{prev} = x_{neu}, P_{prev} = P_{neu}$
+};
+
+% --- PFEILE ---
+\path [line] (timer) -- (sigmas);
+\path [line] (sigmas) -- (pred);
+\path [line] (pred) -- (save_pred);
+\path [line] (save_pred) -- (sys_out);
+
+\path [line] (meas) -- (innov);
+\path [line] (innov) -- (nis_check);
+\path [line] (nis_check) -- node[above] {Nein} (reject);
+\path [line] (nis_check) -- node[right] {Ja} (update);
+\path [line] (update) -- (save_upd);
+
+\draw [line, dashed, blue] (save_pred.east) -- ++(0.8,0) |- (innov.west) node[pos=0.25, above, rotate=90] {Nutze $x_{pred}, P_{pred}$};
+\draw [line, dashed, green!50!black] (save_upd.west) -- ++(-9,0) |- (timer.west) node[pos=0.25, above, rotate=90] {Neuer Startzustand};
+
+\end{tikzpicture}
+
+\end{document}
