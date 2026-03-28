@@ -15,7 +15,7 @@ Aus diesem Grund wird in der vorliegenden Arbeit eine modellbasierte Vorhersage 
 \section{Nutzung der Roboterbewegung und Kamerakinematik}
 \label{sec:nutzung_roboterbewegung_kamerakinematik}
 
-Grundlage der Vorhersage ist die Annahme, dass die aktuelle Bewegung des Roboters bekannt ist. Im implementierten System wird hierzu ein kartesischer Geschwindigkeitsvektor aus dem Robotercontroller eingelesen. Dieser liegt zunächst im Basisrahmen des Roboters vor und wird anschließend unter Verwendung der bekannten \ac{TF}-Beziehungen in den Kamerarahmen transformiert. Dabei werden sowohl die Rotation zwischen Basis-, \ac{TCP}- und Kamerarahmen als auch der Hebelarm zwischen \ac{TCP} und Kamera berücksichtigt.
+Grundlage der Vorhersage ist die Annahme, dass die aktuelle Bewegung des Roboters bekannt ist. Im implementierten System wird hierzu ein kartesischer Geschwindigkeitsvektor aus dem Robotercontroller eingelesen. Dieser liegt zunächst im Basisframe des Roboters vor und wird anschließend unter Verwendung der bekannten \ac{TF}-Beziehungen in das Kameraframe transformiert. Dabei werden sowohl die Rotation zwischen Basis-, \ac{TCP}- und Kameraframe als auch der Hebelarm zwischen \ac{TCP} und Kamera berücksichtigt.
 
 Der resultierende kamerabezogene Geschwindigkeitsvektor wird als
 \begin{equation}
@@ -77,12 +77,12 @@ fortgeschrieben. Die Zeitdifferenz \(\Delta t\) wird aus der tatsächlich vergan
 
 Je nach verwendetem Filtertyp wird dieser Grundschritt unterschiedlich in die jeweilige Schätzgleichung eingebettet. Beim \ac{EKF} wird beispielsweise ein linearisiertes Zustandsübergangsmodell verwendet, während der \ac{UKF} die Prädiktion über Sigma-Punkte realisiert. Unabhängig von der konkreten Filtervariante bleibt jedoch die zugrunde liegende Bildpunktdynamik identisch: Die Veränderung der Merkmalspositionen wird aus der Interaction Matrix und der kamerabezogenen Bewegung berechnet.
 
-\section{Tiefenmodell und Tiefenfortschreibung}
-\label{sec:tiefenmodell_tiefenfortschreibung}
+\section{Tiefenmodell und Tiefenberechnung}
+\label{sec:tiefenmodell_tiefenberechnung}
 
 Da die Interaction Matrix explizit von der Tiefe der Merkmale abhängt, ist die Vorhersage auf Tiefenwerte pro Keypoint angewiesen. Liegen gültige Tiefenmessungen vor, werden diese direkt verwendet. Für Merkmale ohne verlässliche Tiefenmessung greift die Implementierung auf einen Fallback-Wert \(Z_{\mathrm{fallback}}\) zurück. Auf diese Weise bleibt die Vorhersage auch dann definiert, wenn einzelne Tiefenmessungen fehlen oder außerhalb gültiger Grenzen liegen.
 
-Zusätzlich enthält die C++-Node eine modellbasierte Tiefenfortschreibung. Für ein Merkmal mit normierten Koordinaten \((x_i,y_i)\), Tiefe \(Z_i\) und kamerabezogener Geschwindigkeit wird die Tiefenänderung gemäß
+Zusätzlich enthält die C++-Node eine modellbasierte Tiefenberechnung. Für ein Merkmal mit normierten Koordinaten \((x_i,y_i)\), Tiefe \(Z_i\) und kamerabezogener Geschwindigkeit wird die Tiefenänderung gemäß
 \begin{equation}
 \dot{Z}_i = -v_z + Z_i \left( \omega_y x_i - \omega_x y_i \right)
 \end{equation}
@@ -91,7 +91,7 @@ berechnet. Daraus ergibt sich für den nächsten Zeitschritt
 Z_{i,k+1} = Z_{i,k} + \dot{Z}_i \, \Delta t.
 \end{equation}
 
-Der vorhergesagte Tiefenwert wird anschließend auf einen zulässigen Bereich begrenzt. Diese Tiefenfortschreibung verbessert die Konsistenz des Modells, da nicht nur die Bildlage, sondern auch die zugrunde liegende Merkmaltiefe zeitlich mitgeführt wird.
+Der vorhergesagte Tiefenwert wird anschließend auf einen zulässigen Bereich begrenzt. Diese Tiefenberechnung verbessert die Konsistenz des Modells, da nicht nur die Bildlage, sondern auch die zugrunde liegende Merkmaltiefe zeitlich mitgeführt wird.
 
 \section{Aktive Keypoint-Menge und geometrische Konsistenz}
 \label{sec:aktive_keypoint_menge_geometrische_konsistenz}

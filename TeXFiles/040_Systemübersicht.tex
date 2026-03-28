@@ -1,12 +1,12 @@
 \chapter{Systemarchitektur und Methode}
 \label{chap:systemarchitektur_methode}
 
-Dieses Kapitel beschreibt die Architektur des entwickelten Systems zur bildbasierten Roboterregelung. Ziel des Systems ist es, einen modularen \textit{Image-Based Visual Servoing} (IBVS)-Stack zu implementieren, der es ermöglicht, einen UR5e-Roboter mithilfe visueller Merkmale aus einer Kamerabeobachtung zu steuern. Das System basiert auf einer modularen Architektur, bei der einzelne Komponenten wie Feature-Erkennung, Referenzmodellbildung, Matching, Filterung und Regelung unabhängig voneinander entwickelt und ausgetauscht werden können. Diese Struktur ermöglicht eine flexible Erweiterung des Systems sowie die einfache Integration alternativer Verfahren. Die gesamte Pipeline ist in mehrere ROS2-Pakete aufgeteilt und wird in einer containerisierten Umgebung betrieben, wodurch eine reproduzierbare und klar strukturierte Systemarchitektur entsteht \cite{ros2_nodes, ros2_topics}.
+Dieses Kapitel beschreibt die Architektur des entwickelten Systems zur bildbasierten Roboterregelung. Ziel des Systems ist es, einen modularen \ac{IBVS}-Stack zu implementieren, der es ermöglicht, einen UR5e-Roboter mithilfe visueller Merkmale aus einer Kamerabeobachtung zu steuern. Das System basiert auf einer modularen Architektur, bei der einzelne Komponenten wie Feature-Erkennung, Referenzmodellbildung, Matching, Filterung und Regelung unabhängig voneinander entwickelt und ausgetauscht werden können. Diese Struktur ermöglicht eine flexible Erweiterung des Systems sowie die einfache Integration alternativer Verfahren. Die gesamte Pipeline ist in mehrere ROS2-Pakete aufgeteilt und wird in einer containerisierten Umgebung betrieben, wodurch eine reproduzierbare und klar strukturierte Systemarchitektur entsteht \cite{ros2_nodes, ros2_topics}.
 
 \section{Systemübersicht}
 \label{sec:systemuebersicht}
 
-Das entwickelte System implementiert eine vollständige Pipeline für \textit{Image-Based Visual Servoing}. Die Pipeline beginnt mit der Aufnahme eines Kamerabildes, aus dem visuelle Merkmale extrahiert werden. Anschließend werden diese Merkmale mit einem zuvor erzeugten Referenzdatensatz verglichen, um korrespondierende Bildpunkte zu bestimmen. Auf Grundlage dieser Feature-Korrespondenzen wird ein Bildfehler berechnet, der schließlich in eine Roboterbewegung umgewandelt wird.
+Das entwickelte System implementiert eine vollständige Pipeline für \ac{IBVS}. Die Pipeline beginnt mit der Aufnahme eines Kamerabildes, aus dem visuelle Merkmale extrahiert werden. Anschließend werden diese Merkmale mit einem zuvor erzeugten Referenzdatensatz verglichen, um korrespondierende Bildpunkte zu bestimmen. Auf Grundlage dieser Feature-Korrespondenzen wird ein Bildfehler berechnet, der schließlich in eine Roboterbewegung umgewandelt wird.
 
 Ein zentrales Ziel der Architektur besteht darin, ein stabiles Referenzmodell aus mehreren Beobachtungen aufzubauen, anstatt sich auf eine einzelne Bildaufnahme zu verlassen. Dadurch kann die Robustheit der Feature-Erkennung erhöht werden. Die gesamte IBVS-Pipeline besteht aus den folgenden Hauptschritten:
 
@@ -32,7 +32,7 @@ Das System besteht aus zwei zentralen Hardwarekomponenten: einer RGB-D-Kamera zu
 
 Als Kamerasystem wird eine Intel RealSense D435 verwendet. Diese Kamera stellt sowohl RGB- als auch Tiefeninformationen bereit und ist für Robotik- und Wahrnehmungsanwendungen weit verbreitet. Die D435 basiert auf einem stereoskopischen Tiefenprinzip und ist für kompakte, echtzeitfähige Anwendungen ausgelegt \cite{realsense_d435, realsense_d400_datasheet}.
 
-Im Rahmen dieser Arbeit wird primär das RGB-Bild für die Feature-Erkennung verwendet. Die Tiefeninformation wird derzeit nur eingeschränkt genutzt, beispielsweise für mögliche \textit{Region-of-Interest}-Filterungen oder zur Festlegung einer konstanten Tiefenschätzung für die Visual-Servoing-Berechnung. Die Kamera wird in der vorliegenden Implementierung mit folgenden Einstellungen betrieben:
+Im Rahmen dieser Arbeit wird primär das RGB-Bild für die Feature-Erkennung verwendet. Die Tiefeninformation wird derzeit nur eingeschränkt genutzt, beispielsweise für mögliche \ac{ROI}-Filterungen oder zur Festlegung einer konstanten Tiefenschätzung für die Visual-Servoing-Berechnung. Die Kamera wird in der vorliegenden Implementierung mit folgenden Einstellungen betrieben:
 
 \begin{itemize}
 	\item Auflösung: 640 $\times$ 480 Pixel
@@ -64,12 +64,12 @@ Die Rotationen um die x- und y-Achse sind deaktiviert, um die Komplexität des R
 \section{Softwarearchitektur}
 \label{sec:softwarearchitektur}
 
-Die Softwarearchitektur des Systems basiert auf dem \textit{Robot Operating System 2} (ROS2). ROS2 unterstützt die Aufteilung komplexer robotischer Systeme in modulare Nodes, die über Topics, Services und weitere Kommunikationsmechanismen miteinander interagieren \cite{ros2_nodes, ros2_topics}. Die Funktionalität ist in mehrere unabhängige ROS2-Pakete aufgeteilt, die jeweils spezifische Aufgaben innerhalb der IBVS-Pipeline übernehmen. Die Verwendung einer modularen Architektur ermöglicht eine klare Trennung zwischen Wahrnehmung, Datenverarbeitung und Robotersteuerung.
+Die Softwarearchitektur des Systems basiert auf dem \ac{ROS2}. \ac{ROS2} unterstützt die Aufteilung komplexer robotischer Systeme in modulare Nodes, die über Topics, Services und weitere Kommunikationsmechanismen miteinander interagieren \cite{ros2_nodes, ros2_topics}. Die Funktionalität ist in mehrere unabhängige \ac{ROS2}-Pakete aufgeteilt, die jeweils spezifische Aufgaben innerhalb der \ac{IBVS}-Pipeline übernehmen. Die Verwendung einer modularen Architektur ermöglicht eine klare Trennung zwischen Wahrnehmung, Datenverarbeitung und Robotersteuerung.
 
 \subsection{ROS2-Systemstruktur}
 \label{subsec:ros2_systemstruktur}
 
-Die Implementierung ist in mehrere ROS2-Pakete unterteilt:
+Die Implementierung ist in mehrere \ac{ROS2}-Pakete unterteilt:
 
 \begin{itemize}
 	\item \texttt{ibvs\_perception}: Erkennung von Keypoints und Deskriptoren aus Kamerabildern
@@ -97,7 +97,7 @@ Alle Container verwenden das Netzwerkmodell \texttt{network\_mode: host}. Dadurc
 \subsection{Datenfluss im System}
 \label{subsec:datenfluss}
 
-Der Datenfluss innerhalb des Systems folgt einer klar definierten Pipeline. Zunächst wird ein RGB-Bild von der Kamera aufgenommen und an die Feature-Erkennungsnode weitergeleitet. Diese Node extrahiert Keypoints und Deskriptoren aus dem Bild und veröffentlicht sie als ROS-Nachricht. Die Referenzmanager-Node nutzt diese Informationen, um über mehrere Frames hinweg ein stabiles Referenz-Feature-Set aufzubauen. Anschließend werden aktuelle Bildfeatures mit den Referenzfeatures gematcht. Die daraus entstehenden Feature-Korrespondenzen werden an den IBVS-Controller übergeben. Der Controller berechnet aus dem Bildfehler eine kartesische Geschwindigkeit, die schließlich als Steuerbefehl an den UR-Roboter gesendet wird.
+Der Datenfluss innerhalb des Systems folgt einer klar definierten Pipeline. Zunächst wird ein RGB-Bild von der Kamera aufgenommen und an die Feature-Erkennungsnode weitergeleitet. Diese Node extrahiert Keypoints und Deskriptoren aus dem Bild und veröffentlicht sie als ROS-Nachricht. Die Referenzmanager-Node nutzt diese Informationen, um über mehrere Frames hinweg ein stabiles Referenz-Feature-Set aufzubauen. Anschließend werden aktuelle Bildfeatures mit den Referenzfeatures gematcht. Die daraus entstehenden Feature-Korrespondenzen werden an den \ac{IBVS}-Controller übergeben. Der Controller berechnet aus dem Bildfehler eine kartesische Geschwindigkeit, die schließlich als Steuerbefehl an den UR-Roboter gesendet wird.
 
 Der gesamte Datenfluss kann vereinfacht wie folgt dargestellt werden:
 
