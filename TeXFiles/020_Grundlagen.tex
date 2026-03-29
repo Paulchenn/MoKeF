@@ -53,7 +53,7 @@ v_x & v_y & v_z & \omega_x & \omega_y & \omega_z
 \end{bmatrix}^{\top}.
 \end{equation}
 
-Für ein einzelnes Punktmerkmal mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ ergibt sich die zugehörige Interaction Matrix zu \cite{chaumette2006visual}
+Für ein einzelnes Feature mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ ergibt sich die zugehörige Interaction Matrix zu \cite{chaumette2006visual}
 \begin{equation}
 \mathbf{L}_p =
 \begin{bmatrix}
@@ -62,9 +62,9 @@ Für ein einzelnes Punktmerkmal mit normierten Bildkoordinaten $(x,y)$ und Tiefe
 \end{bmatrix}.
 \end{equation}
 
-Diese Matrix beschreibt, wie sich die Bildkoordinaten eines einzelnen Punktmerkmals in Abhängigkeit von der Kamerabewegung verändern. Dabei hängen die translatorischen Anteile direkt von der Tiefe $Z$ ab, während die rotatorischen Anteile von der aktuellen Bildlage des Punktes beeinflusst werden. \cite{chaumette2006visual}
+Diese Matrix beschreibt, wie sich die Bildkoordinaten eines einzelnen Features in Abhängigkeit von der Kamerabewegung verändern. Dabei hängen die translatorischen Anteile direkt von der Tiefe $Z$ ab, während die rotatorischen Anteile von der aktuellen Bildlage des Punktes beeinflusst werden. \cite{chaumette2006visual}
 
-Werden mehrere Punktmerkmale gleichzeitig betrachtet, so wird für jedes Merkmal eine eigene Interaction Matrix aufgestellt. Die gesamte Interaction Matrix ergibt sich dann aus den Einzelmatrizen:
+Werden mehrere Features gleichzeitig betrachtet, so wird für jedes Merkmal eine eigene Interaction Matrix aufgestellt. Die gesamte Interaction Matrix ergibt sich dann aus den Einzelmatrizen:
 \begin{equation}
 \mathbf{L}_s =
 \begin{bmatrix}
@@ -75,7 +75,7 @@ Werden mehrere Punktmerkmale gleichzeitig betrachtet, so wird für jedes Merkmal
 \end{bmatrix}.
 \end{equation}
 
-Für $n$ Punktmerkmale besitzt die gesamte Interaction Matrix damit die Dimension $2n \times 6$. Da diese Matrix im Allgemeinen nicht quadratisch ist, kann sie in der Regel nicht direkt invertiert werden. Stattdessen wird ihre Pseudoinverse verwendet. Diese ermöglicht es, auch für überbestimmte oder unterbestimmte Gleichungssysteme eine Lösung für die Kamerageschwindigkeit zu berechnen. Im Kontext von \ac{IBVS} wird dabei typischerweise diejenige Geschwindigkeit bestimmt, welche den Bildfehler im Sinne einer Least-Squares-Lösung bestmöglich reduziert. \cite{chaumette2006visual, corke2017robotics}
+Für $n$ Features besitzt die gesamte Interaction Matrix damit die Dimension $2n \times 6$. Da diese Matrix im Allgemeinen nicht quadratisch ist, kann sie in der Regel nicht direkt invertiert werden. Stattdessen wird ihre Pseudoinverse verwendet. Diese ermöglicht es, auch für überbestimmte oder unterbestimmte Gleichungssysteme eine Lösung für die Kamerageschwindigkeit zu berechnen. Im Kontext von \ac{IBVS} wird dabei typischerweise diejenige Geschwindigkeit bestimmt, welche den Bildfehler im Sinne einer Least-Squares-Lösung bestmöglich reduziert. \cite{chaumette2006visual, corke2017robotics}
 
 Zur Regelung wird der Bildfehler zwischen aktueller und gewünschter Merkmalslage definiert als
 \begin{equation}
@@ -86,6 +86,7 @@ wobei $\mathbf{s}$ die aktuellen und $\mathbf{s}^{*}$ die gewünschten Bildmerkm
 \mathbf{v}_c = -\lambda \, \mathbf{L}_s^{+} \, (\mathbf{s} - \mathbf{s}^{*}),
 \end{equation}
 wobei $\lambda > 0$ die Regelverstärkung und $\mathbf{L}_s^{+}$ die Pseudoinverse der Interaction Matrix bezeichnet.
+\todo{Berechnung der Pseudoinversen hinzufügen ?}
 
 Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, sodass die aktuellen Bildmerkmale gegen ihre gewünschte Referenzlage konvergieren. Die Interaction Matrix bildet dabei die mathematische Grundlage, um aus einem Fehler im Bildraum eine geeignete Kamerabewegung abzuleiten. \cite{chaumette2006visual}
 \section{Keypoint Detection und Feature Matching}
@@ -131,6 +132,7 @@ Ein weiteres Problem stellt die Okklusion dar. Dabei werden Teile des Objekts te
 In beiden Fällen kann es passieren, dass zuvor erkannte Keypoints im Bild nicht mehr gefunden werden. Für \ac{IBVS}-Systeme ist dies problematisch, da die Berechnung des Bildfehlers direkt von der Verfügbarkeit dieser Features abhängt.
 
 Daher werden in vielen modernen Visual-Servoing-Systemen zusätzliche Strategien eingesetzt, um den Verlust von Features zu kompensieren. Dazu gehören beispielsweise modellbasierte Vorhersagen oder Filtermethoden zur Stabilisierung der Featurepositionen.
+\todo{abschnitt notwendig ?}
 
 \section{Zustandsmodelle für visuelle Features}
 \label{sec:ZustandsmodellefürvisuelleFeatures}
