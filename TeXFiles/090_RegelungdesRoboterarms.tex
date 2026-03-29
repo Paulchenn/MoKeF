@@ -140,6 +140,7 @@ Zunächst wird eine Bewegung nur dann freigegeben, wenn die Initialisierung abge
 
 Darüber hinaus wird die aktuelle Abweichung zur Referenz kontinuierlich überwacht. Unterschreitet der Bildfehler einen vorgegebenen Schwellwert über eine gewisse Haltezeit, wird das Ziel als erreicht betrachtet und der Regler gibt ein Nullkommando aus. Dadurch wird vermieden, dass der Roboter in der Zielnähe unnötig weiterregelt oder auf geringfügiges Bildrauschen reagiert.
 
+\newpage
 Gerade im Zusammenspiel mit den vorgelagerten Confidence- und Switching-Mechanismen zeigt sich hier der Mehrwert des Gesamtansatzes: Der Regler ist nicht darauf angewiesen, dass jederzeit alle realen Features stabil sichtbar sind. Stattdessen kann er mit gefilterten oder modellgestützten Merkmalslagen weiterarbeiten und nur dann auf einen sicheren Stillstand gehen, wenn die Beobachtungslage insgesamt nicht mehr ausreichend verlässlich ist.
 
 \section{Einordnung im Gesamtsystem}

@@ -1,11 +1,11 @@
-\chapter{Experimente}
-\label{ch:experimente}
-
-\section{Benchmarking-Methodik und Evaluierungsmetriken}
+\chapter{Benchmarking-Methodik und Evaluierungsmetriken}
 \label{sec:benchmarking_methodik}
+
+\todo[inline]{Benchmarking-Methodik muss noch auf den aktuellen Stand gebracht werden.}
+
 Um die Leistungsfähigkeit der entwickelten Filter- und Entscheidungslogik objektiv zu bewerten, wird ein systematisches Benchmarking durchgeführt. Die Herausforderung besteht hierbei in der hohen Anzahl an Freiheitsgraden innerhalb der Versuchskonfiguration, die zu einer kombinatorischen Explosion der Testfälle führen kann.
 
-\subsection{Definition des Versuchsraums}
+\section{Definition des Versuchsraums}
 \label{subsec:versuchsraum}
 Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
 
@@ -103,7 +103,7 @@ Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
 \footnotetext{Der Hintergrund des Bildes wurde zur besseren Visualisierung mit KI-Werkzeugen freigestellt und bearbeitet.}
 
 
-\subsection{Methodische Abgrenzung und Reduktion}
+\section{Methodische Abgrenzung und Reduktion}
 \label{subsec:methodische_abgrenzung}
 Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden folgende Komponenten begründet ausgeschlossen:
 
@@ -115,7 +115,7 @@ Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden 
     \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist in der Literatur hinreichend dokumentiert~\cite{chaumette2006visual, chaumette2007visual2}. Ziel dieser Arbeit ist die Evaluation der Robustheit unter industriellen Störbedingungen (Edge Cases). Da Szenario I keine Herausforderung für die Filter- und Entscheidungslogik darstellt und keine Differenzierung der Algorithmen ermöglicht, wird es als trivial eingestuft. Der Fokus liegt stattdessen auf der Belastbarkeit und Fehlertoleranz in den Szenarien II bis IV, um die Resilienz des Systems gegenüber unvorhergesehenen Umgebungsänderungen zu quantifizieren \cite{marchand2002virtual}.
 \end{listNorm}
 
-\subsection{Design of Experiments (DoE)}
+\section{Design of Experiments (DoE)}
 \label{subsec:doe}
 Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gegen die relevanten Szenarien und Levels getestet werden. Um die Robustheit gegenüber unterschiedlichen Oberflächenbeschaffenheiten zu validieren, wird jede dieser Testreihen für alle drei in Abschnitt~\ref{subsec:versuchsraum} definierten Bauteil-Typen (Typ 1 bis Typ 3) durchgeführt. 
 
@@ -156,7 +156,7 @@ Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um
 \end{table}
 
 
-\subsection{Versuchsplan und zeitliche Abschätzung}
+\section{Versuchsplan und zeitliche Abschätzung}
 \label{subsec:versuchsplan}
 
 Durch die Ausweitung der Versuchsreihen auf drei Bauteil-Typen ergeben sich insgesamt 90 zu untersuchende Kombinationen. Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Da die Varianz der Messergebnisse nun über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
@@ -187,7 +187,7 @@ Hinsichtlich des Versuchsablaufs wird für jede der 90 Kombinationen zu Beginn e
 \end{enumerate}
 
 
-\subsection{Evaluierungsmetriken}
+\section{Evaluierungsmetriken}
 \label{subsec:evaluierungsmetriken}
 Die Bewertung erfolgt anhand dreier Hauptkriterien:
 \begin{enumerate}

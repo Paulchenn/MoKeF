@@ -52,6 +52,7 @@ Der verwendete Controller ist \texttt{cartesian\_twist\_passthrough\_controller}
 	\texttt{/cartesian\_twist\_passthrough\_controller/cmd\_vel}
 \end{center}
 
+\newpage
 Der Controller akzeptiert kartesische Geschwindigkeiten in Form eines \textit{Twist}-Vektors. Im aktuellen System werden folgende Freiheitsgrade aktiv geregelt:
 
 \begin{itemize}
@@ -92,6 +93,7 @@ Zur Vereinfachung der Systemverwaltung wird das gesamte System in mehreren Docke
 	\item \texttt{ros\_ws}: Workspace mit den IBVS-Paketen und der eigentlichen Visual-Servoing-Implementierung
 \end{itemize}
 
+\newpage
 Alle Container verwenden das Netzwerkmodell \texttt{network\_mode: host}. Dadurch können ROS2-Nodes in verschiedenen Containern direkt miteinander kommunizieren. Zusätzlich teilen sich alle Container dieselbe ROS-Domain-ID, wodurch die automatische Erkennung von ROS2-Nodes und Topics ermöglicht wird.
 
 \subsection{Datenfluss im System}
@@ -123,6 +125,7 @@ Diese Pipeline bildet die Grundlage für die visuelle Roboterregelung im entwick
 
 Zur Erhöhung der Robustheit existiert zusätzlich eine Rückkopplung (Feedback-Loop) zwischen dem IBVS-Controller (bzw. dem integrierten Filter) und dem Feature-Matching. Der Zustandsfilter veröffentlicht mit einer festen Frequenz kontinuierlich die prädizierten (vorhergesagten) Positionen der Keypoints im Bild. Geht ein Feature in der regulären Detektions-Pipeline temporär verloren, nutzt das Matching-Modul diese Vorhersagen, um das Feature in einer zielgerichteten lokalen Suche (\textit{Local Rescue}) wiederzufinden. Dieser Top-Down-Ansatz wird in den folgenden Kapiteln im Detail beschrieben.
 
+\newpage
 \section{Feature Detection}
 \label{sec:feature_detection}
 
@@ -147,6 +150,7 @@ Die Anzahl der extrahierten Keypoints wird durch den Parameter \texttt{top\_k} b
 
 Die Feature-Erkennung wird in der ROS2-Node \texttt{ibvs\_perception.keypoint\_node} implementiert. Diese Node empfängt Kamerabilder vom RealSense-Treiber und extrahiert daraus Keypoints und Deskriptoren. Die Eingabe erfolgt über das Topic \texttt{/camera/camera/color/image\_raw}. Die extrahierten Keypoints werden anschließend über das Topic \texttt{/ibvs/keypoints} veröffentlicht.
 
+\newpage
 \subsection{Feature-Deskriptoren}
 \label{subsec:feature_deskriptoren}
 

@@ -26,6 +26,7 @@ Der Aufbau der Keypoint-Datenbank erfolgt im implementierten System über eine e
 
 Beim Eingang neuer Keypoints prüft der Referenzmanager für jedes Merkmal, ob bereits ein ähnlicher Kandidat in der Datenbank vorhanden ist. Hierzu wird zunächst eine räumliche Nachbarschaftssuche durchgeführt. Nur Kandidaten innerhalb eines maximalen Pixelabstands \texttt{max\_px\_dist} kommen für eine Zuordnung infrage. Anschließend wird, sofern Deskriptoren verfügbar sind, die Ähnlichkeit zwischen dem neuen Merkmal und den vorhandenen Kandidaten ausgewertet. Wird ein ausreichend ähnlicher Kandidat gefunden, so wird dieser aktualisiert; andernfalls wird ein neuer Kandidat in die Datenbank eingefügt. Auf diese Weise entsteht schrittweise eine konsolidierte Merkmalsbasis aus mehreren Beobachtungen. 
 
+\newpage
 \section{Ähnlichkeitsmaß und Wiedererkennungslogik}
 \label{sec:aehnlichkeitsmass_wiedererkennungslogik}
 
@@ -68,6 +69,7 @@ Die Referenzdatenbank ist die zentrale Eingangsgröße für den nachfolgenden De
 
 Darüber hinaus beeinflusst die Qualität der Datenbank direkt die Qualität des gesamten Systems. Eine Referenzdatenbank mit instabilen, selten beobachteten oder deskriptiv uneindeutigen Merkmalen würde zu schwachen Matchings und damit zu einer instabilen Regelung führen. Die in der Initialisierung verwendeten Mechanismen zur Häufigkeitsbewertung, räumlichen Konsistenzprüfung und Deskriptorverdichtung sind daher nicht nur eine Vorverarbeitung, sondern ein wesentlicher Bestandteil der Gesamtmethode. 
 
+\newpage
 \section{Einordnung in das Gesamtsystem}
 \label{sec:einordnung_keypoint_datenbank_gesamtsystem}
 
