@@ -104,6 +104,8 @@
 \usepackage{subcaption}
 \usepackage{lscape}
 \usepackage{svg}
+\usepackage{pgf}
+\usepackage{import}
 \usepackage{pgf-pie}
 \usepackage{transparent}
 \usepackage{pdfpages}
@@ -112,6 +114,11 @@
 \pgfplotsset{plot coordinates/math parser=false}
 \usetikzlibrary{patterns,arrows,shapes,positioning,shadows,trees,calc,positioning,external}
 \usepackage{tikz}
+
+%% For Matplotlib PGF exports
+\def\mathdefault#1{#1}
+\makeatletter\@ifpackageloaded{underscore}{}{\usepackage[strings]{underscore}}\makeatother
+
 %\tikzexternalize[prefix=Figures/tikzexternalize_cache/,optimize command away=\includepdf]
 \tikzexternaldisable
 % https://golatex.de//wiki/%5cincludegraphics
