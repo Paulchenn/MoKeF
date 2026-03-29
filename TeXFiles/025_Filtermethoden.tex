@@ -3,6 +3,8 @@
 
 Wie in Kapitel~\ref{ch:grundlagen} beschrieben, enthalten Messdaten aus Kamerasystemen häufig Rauschen, Ausreißer oder fallen durch externe Störeinflüsse wie Reflexionen temporär ganz aus. Um in solchen Situationen dennoch eine stabile Roboterregelung zu gewährleisten, sind robuste Filtermethoden zur Zustandsschätzung unerlässlich. In diesem Kapitel werden die theoretischen und mathematischen Grundlagen der in dieser Arbeit verwendeten Filter vorgestellt.
 
+Im Anhang~\ref{sec:ablaufdiagrammeFilter} sind zu den im folgenden vorgestellten Filtern Ablaufdiagramme dargestellt.
+
 \section{Der lineare Kalman-Filter}
 \label{sec:LinearerKalmanFilter}
 Der Standard \ac{KF} ist ein optimaler rekursiver Schätzer für lineare Systeme unter Einfluss von Gaußschem Rauschen~\cite{kalman1960new, welch2006introduction}. Für das Tracking von Keypoints im Bildraum $(u, v)$ mittels eines Constant-Velocity-Modells (\ac{CV}) wird der Zustandsvektor $\mathbf{x}_k$ zum Zeitpunkt $k$ als:
@@ -71,9 +73,10 @@ Sobald eine neue Messung der Pixelkoordinaten $\mathbf{z}_k = [u_{\text{gemessen
         \end{equation}
 \end{enumerate}
 
-\section{Ausreißererkennung mittels Mahalanobis-Distanz}
+\newpage
+\section{Ausreißererkennung mittels \\Mahalanobis-Distanz}
 \label{sec:MahalanobisGating}
-Feature-Matcher sind anfällig für falsche Assoziationen (\textit{False Positives}) durch Clutter oder Reflexionen. Die Integration solcher Ausreißer führt zur Divergenz der Zustandsschätzung. Um dies zu verhindern, wird ein Gating-Verfahren angewendet, das Messungen vor dem Update-Schritt auf statistische Plausibilität prüft.
+Feature-Matcher sind anfällig für falsche Assoziationen (\textit{False Positives}) durch Clutter oder Reflexionen. Die Integration solcher Ausreißer führt zur Divergenz der Zustandsschätzung. Um dies zu verhindern, wird ein Gating-Verfahren angewendet, das Messungen vor dem Update-Schritt auf statistische Plausibilität prüft. \todo[author=Paul]{Quelle für Malahnobis-Distanz}
 
 Anstelle der euklidischen Distanz wird die Mahalanobis-Distanz verwendet. Sie gewichtet das Residuum $\tilde{\mathbf{y}}_k$ mit der Innovationskovarianz $S_k$:
 \begin{equation}
@@ -81,7 +84,7 @@ Anstelle der euklidischen Distanz wird die Mahalanobis-Distanz verwendet. Sie ge
 \end{equation}
 Dies hat den Vorteil, dass die Distanz mit Berücksichtigung der Unsicherheit des Systems und der Messung skaliert wird.
 
-Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verteilung mit $m$ Freiheitsgraden (\ac{DoF}). Um eine Messung zu validieren, wird ein Konfidenzintervall gewählt und der entsprechende Schwellenwert $\gamma$ aus der $\chi^2$-Tabelle entnommen (siehe Tabelle~\ref{tab:chi_square}).
+Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verteilung mit $m$ Freiheitsgraden (\ac{DoF}). Um eine Messung zu validieren, wird ein Konfidenzintervall gewählt und der entsprechende Schwellenwert $\gamma$ aus der $\chi^2$-Tabelle entnommen (siehe Tabelle~\ref{tab:chi_square})~\cite{bar2001estimation}.
 
 \begin{table}[htpb]
     \centering
@@ -96,7 +99,9 @@ Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verte
         20 (z.\,B. 10 Keypoints) & 31.41 & 37.57 \\
         30 (z.\,B. 15 Keypoints) & 43.77 & 50.89 \\
         40 (z.\,B. 20 Keypoints) & 55.76 & 63.69 \\
-         $\vdots$ & $\vdots$ & $\vdots$ \\
+        $\vdots$ & $\vdots$ & $\vdots$ \\
+        60 (z.\,B. 30 Keypoints) & 79.082 & 88.379 \\
+        $\vdots$ & $\vdots$ & $\vdots$ \\
         \bottomrule
     \end{tabular}
     \caption{Auszug aus der $\chi^2$-Verteilungstabelle für das Measurement-Gating~\cite{bar2001estimation}.}
@@ -107,9 +112,10 @@ Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verte
 
 Da die Dimension des Messvektors ($m$) bei dynamischem Keypoint-Tracking stetig fluktuiert, wird die quadrierte Mahalanobis-Distanz in der praktischen Implementierung häufig durch die Messdimension $m$ normiert (reduziertes Chi-Quadrat). Dies ermöglicht die Verwendung eines konstanten Schwellenwertes $\gamma$, unabhängig von der aktuellen Anzahl der getrackten Features.
 
+\newpage
 \section{Erweiterte Kalman-Filter für nichtlineare Systeme}
 \label{sec:ErweiterteKalmanFilter}
-Da viele reale Systeme, wie auch das in dieser Arbeit betrachtete Bewegungsmodell, nichtlineare Eigenschaften aufweisen, reicht der klassische Kalman-Filter oft nicht aus. Im Folgenden werden daher Erweiterungen für nichtlineare Systeme betrachtet.
+Da reale Systeme, wie auch das in dieser Arbeit betrachtete Bewegungsmodell, nichtlineare Eigenschaften aufweisen, reicht der klassische Kalman-Filter nicht aus. Im Folgenden werden daher Erweiterungen für nichtlineare Systeme betrachtet.
 
 \subsection{Extended Kalman-Filter (EKF)}
 \label{subsec:EKF}
@@ -134,25 +140,26 @@ Die Korrektur erfolgt analog unter Verwendung der Mess-Jacobi-Matrix $H_k$:
 Der \ac{EKF} verliert an Genauigkeit, wenn Modelle stark nichtlinear sind. Der \ac{UKF}, basierend auf der Arbeit von Julier und Uhlmann, umgeht dieses Problem durch die \textit{Unscented Transform} (UT)~\cite{julier1997new}. Anstatt analytische Ableitungen zu berechnen, wählt der \ac{UKF} deterministisch Sigma-Punkte $\mathcal{X}^{(i)}$ aus, die die Wahrscheinlichkeitsverteilung repräsentieren. Diese werden direkt durch die nichtlinearen Funktionen propagiert und zu Mittelwert und Kovarianz rekonstruiert.
 
 \subsubsection{Die Unscented Transform (UT) und Sigma-Punkte}
-Für einen $n$-dimensionalen Zustandsvektor $x$ mit Mittelwert $\mu$ und Kovarianz $P$ wählt der UKF deterministisch $2n + 1$ sogenannte Sigma-Punkte $\mathcal{X}^{(i)}$ aus. Diese Punkte repräsentieren die Verteilung exakt bis zur zweiten Ordnung (Mittelwert und Kovarianz).
+Für einen $n$-dimensionalen Zustandsvektor $x$ mit Mittelwert $\mu$ und Kovarianz $P$ wählt der UKF deterministisch $2n + 1$ sogenannte Sigma-Punkte $\mathcal{X}^{(i)}$ aus. Diese Punkte repräsentieren die Verteilung exakt bis zur zweiten Ordnung (Mittelwert und Kovarianz)~\cite{julier1997new}.
 
+\newpage
 Die Berechnung der Sigma-Punkte erfolgt typischerweise über die Matrixwurzel der Kovarianzmatrix (z.~B. mittels Cholesky-Zerlegung):
 \begin{align}
     \mathcal{X}^{(0)} &= \mu \\
     \mathcal{X}^{(i)} &= \mu + \left( \sqrt{(n + \lambda) P} \right)_i \quad \text{für } i = 1, \dots, n \\
     \mathcal{X}^{(i)} &= \mu - \left( \sqrt{(n + \lambda) P} \right)_{i-n} \quad \text{für } i = n+1, \dots, 2n
 \end{align}
-Dabei ist $\lambda$ ein Skalierungsparameter, der die Streuung der Sigma-Punkte um den Mittelwert steuert, und der Index $i$ bezeichnet die $i$-te Spalte der Matrixwurzel.
+Dabei ist $\lambda$ ein Skalierungsparameter, der die Streuung der Sigma-Punkte um den Mittelwert steuert, und der Index $i$ bezeichnet die $i$-te Spalte der Matrixwurzel~\cite{julier1997new}.
 
-Jedem Sigma-Punkt $\mathcal{X}^{(i)}$ werden Gewichte für den Mittelwert $W_m^{(i)}$ und für die Kovarianz $W_c^{(i)}$ zugeordnet.
+Jedem Sigma-Punkt $\mathcal{X}^{(i)}$ werden Gewichte für den Mittelwert $W_m^{(i)}$ und für die Kovarianz $W_c^{(i)}$ zugeordnet~\cite{julier1997new}.
 
 \subsubsection{Prädiktion und Update ohne Linearisierung}
-Anstatt Jacobi-Matrizen zu berechnen, werden die Sigma-Punkte direkt durch die nichtlinearen Funktionen $f$ (Systemmodell) oder $h$ (Messmodell) propagiert. Für das Messmodell (wie unser Kameramodell im IBVS) bedeutet das:
+Anstatt Jacobi-Matrizen zu berechnen, werden die Sigma-Punkte direkt durch die nichtlinearen Funktionen $f$ (Systemmodell) oder $h$ (Messmodell) propagiert. Für das Messmodell (wie unser Kameramodell im IBVS) bedeutet das~\cite{julier1997new}:
 \begin{equation}
     \mathcal{Z}^{(i)} = h(\mathcal{X}^{(i)})
 \end{equation}
 
-Der prädizierte Messmittelwert $\hat{z}$ und die zugehörige Kovarianz $S$ ergeben sich dann einfach als gewichtete Summe der transformierten Punkte:
+Der prädizierte Messmittelwert $\hat{z}$ und die zugehörige Kovarianz $S$ ergeben sich dann einfach als gewichtete Summe der transformierten Punkte~\cite{julier1997new}:
 \begin{align}
     \hat{z} &= \sum_{i=0}^{2n} W_m^{(i)} \mathcal{Z}^{(i)} \\
     S &= \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{Z}^{(i)} - \hat{z})(\mathcal{Z}^{(i)} - \hat{z})^T + R
@@ -160,7 +167,7 @@ Der prädizierte Messmittelwert $\hat{z}$ und die zugehörige Kovarianz $S$ erge
 
 \subsection{Error-State Kalman-Filter (ESKF)}
 \label{subsec:ESKF}
-Für Systeme, die 3D-Rotationen beinhalten, führt der Standard-\ac{EKF} aufgrund der Überparametrisierung von Quaternionen häufig zu singulären Kovarianzmatrizen. Der \ac{ESKF} löst dies, indem er den wahren Zustand $x_t$ in einen Nominalzustand $x$ und einen linearisierten Fehlerzustand $\delta x$ aufteilt~\cite{sola2017quaternion}:
+Für Systeme, die 3D-Rotationen beinhalten, führt der Standard-\ac{EKF} aufgrund der Überparametrisierung von Quaternionen häufig zu singulären Kovarianzmatrizen. Der \ac{ESKF} löst dies, indem er den wahren Zustand $x_t$ in einen Nominalzustand $x$ und einen linearisierten Fehlerzustand $\delta x$ aufteilt~\cite{sola2017quaternion, forster2017manifold}:
 \begin{equation}
     x_t = x \oplus \delta x
 \end{equation}
@@ -176,7 +183,7 @@ Die Prädiktion des Fehlerzustands ist im Erwartungswert Null ($\delta x_{k|k-1}
 \begin{equation}
     P_{k|k-1} = F_{\delta x} P_{k-1|k-1} F_{\delta x}^T + F_i Q F_i^T
 \end{equation}
-Dabei ist $F_{\delta x}$ die Jacobi-Matrix der zeitdiskreten Fehlerkinematik ($F_{\delta x} = \frac{\partial f_{\delta x}}{\partial \delta x}$) und $F_i$ die Rausch-Eingangsmatrix, die das Prozessrauschen $Q$ (z.~B. Internal Measurement Unit) korrekt in den Zustandsraum mappt.
+Dabei ist $F_{\delta x}$ die Jacobi-Matrix der zeitdiskreten Fehlerkinematik ($F_{\delta x} = \frac{\partial f_{\delta x}}{\partial \delta x}$) und $F_i$ die Rausch-Eingangsmatrix, die das Prozessrauschen $Q$ (z.~B. Internal Measurement Unit) korrekt in den Zustandsraum mappt~\cite{forster2017manifold}.
 
 \subsubsection{ESKF Korrektur (Update) und die Kettenregel}
 Liegt eine Messung $z_k$ vor, wird das Residuum $\tilde{y}_k$ bezüglich des unkorrigierten Nominalzustands mittels der Standard-Messfunktion $h(x)$ gebildet:
@@ -205,8 +212,10 @@ Der Filter schätzt nun den aktuellen Fehlerzustand und aktualisiert die Kovaria
     P_{k|k} &= (I - K_k H_{\delta x}) P_{k|k-1}
 \end{align}
 
+\cite{forster2017manifold}.
+
 \subsubsection{Injektion und Reset}
-Abschließend wird der geschätzte Fehler in den Nominalzustand injiziert, um diesen zu korrigieren. Da der Fehler nun Teil des Nominalzustands ist, wird der Fehlerzustand für den nächsten rekursiven Schritt zurückgesetzt (Reset):
+Abschließend wird der geschätzte Fehler in den Nominalzustand injiziert, um diesen zu korrigieren. Da der Fehler nun Teil des Nominalzustands ist, wird der Fehlerzustand für den nächsten rekursiven Schritt zurückgesetzt (Reset)~\cite{forster2017manifold}:
 
 \begin{align}
     x &\leftarrow x \oplus \delta x_{k|k} \\
