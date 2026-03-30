@@ -8,7 +8,7 @@ Dieses Kapitel beschreibt die Architektur des entwickelten Systems zur bildbasie
 
 Das entwickelte System implementiert eine vollständige Pipeline für \ac{IBVS}. Die Pipeline beginnt mit der Aufnahme eines Kamerabildes, aus dem visuelle Merkmale extrahiert werden. Anschließend werden diese Merkmale mit einem zuvor erzeugten Referenzdatensatz verglichen, um korrespondierende Bildpunkte zu bestimmen. Auf Grundlage dieser Feature-Korrespondenzen wird ein Bildfehler berechnet, der schließlich in eine Roboterbewegung umgewandelt wird.
 
-Ein zentrales Ziel der Architektur besteht darin, ein stabiles Referenzmodell aus mehreren Beobachtungen aufzubauen, anstatt sich auf eine einzelne Bildaufnahme zu verlassen. Dadurch kann die Robustheit der Feature-Erkennung erhöht werden. Die gesamte IBVS-Pipeline besteht aus den folgenden Hauptschritten:
+Ein zentrales Ziel der Architektur besteht darin, ein stabiles Referenzmodell aus mehreren Beobachtungen aufzubauen, anstatt sich auf eine einzelne Bildaufnahme zu verlassen. Dadurch kann die Robustheit der Feature-Erkennung erhöht werden. Die gesamte IBVS-Pipeline besteht aus den folgenden Hauptschritten und ist in Abbildung~\ref{fig:ibvs_pipeline} schematisch dargestellt:
 
 \begin{enumerate}
 	\item Aufnahme eines RGB-Kamerabildes durch die RealSense-Kamera
@@ -21,6 +21,15 @@ Ein zentrales Ziel der Architektur besteht darin, ein stabiles Referenzmodell au
 \end{enumerate}
 
 Die resultierende Steuergröße wird anschließend als kartesischer \textit{Twist}-Befehl an den Robotercontroller gesendet. Die Systemarchitektur ist bewusst modular gestaltet. Dadurch können einzelne Komponenten, wie der Feature-Detektor oder das Matching-Verfahren, unabhängig voneinander ausgetauscht werden, ohne dass die übrigen Komponenten angepasst werden müssen.
+
+Auf die Modellbasierte Keypointvorhersage, die in den Kapiteln~\ref{chap:modellbasierte_keypoint_vorhersage} sowie~\ref{ch:FeatureConfidenceundSwitchingStrategie} beschrieben wird, folgt eine Rückkopplungsschleife zwischen dem Filter und dem Matching. Der Filter veröffentlicht kontinuierlich prädizierte Positionen der Keypoints im Bild. Geht ein Feature verloren, nutzt das Matching diese Vorhersagen, um das Feature in einer zielgerichteten lokalen Suche wiederzufinden. Dieser Top-Down-Ansatz erhöht die Robustheit des Systems erheblich, insbesondere unter schwierigen Bildbedingungen.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth, keepaspectratio]{Figures/tikz/gesamtablauf/gesamtablauf.pdf}
+    \caption{Schematische Darstellung der IBVS-Pipeline. Die einzelnen Schritte sind modular aufgebaut, um eine flexible Erweiterung und Anpassung zu ermöglichen.}
+    \label{fig:ibvs_pipeline}
+\end{figure}
 
 \section{Hardwareaufbau}
 \label{sec:hardwareaufbau}
