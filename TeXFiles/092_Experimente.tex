@@ -3,7 +3,7 @@
 
 \todo[inline]{Benchmarking-Methodik muss noch auf den aktuellen Stand gebracht werden.}
 
-Um die Leistungsfähigkeit der entwickelten Filter- und Entscheidungslogik objektiv zu bewerten, wird ein systematisches Benchmarking durchgeführt. Die Herausforderung besteht hierbei in der hohen Anzahl an Freiheitsgraden innerhalb der Versuchskonfiguration, die zu einer kombinatorischen Explosion der Testfälle führen kann.
+Um die Leistungsfähigkeit der entwickelten Filter- und Entscheidungslogik objektiv zu bewerten, wird ein systematisches Benchmarking durchgeführt. Die Herausforderung besteht hierbei in der hohen Anzahl an Freiheitsgraden innerhalb der Versuchskonfiguration, die zu einer kombinatorischen Explosion der Testfälle führt.
 
 \section{Definition des Versuchsraums}
 \label{subsec:versuchsraum}
@@ -31,16 +31,15 @@ Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
         \item \textbf{Szenario I (Standard):} Ideale Beleuchtung, keine Verdeckungen.
         \item \textbf{Szenario II (Okklusion):} Temporäre Verdeckung der Zielpunkte (z.\,B. durch eine 3D-Druck-Brücke).
         \item \textbf{Szenario III (Lichtwechsel):} Starke Reflexionen und Überbelichtung (Specular Highlights).
-        \item \textbf{Szenario IV (Kombination):} Gleichzeitiges Auftreten von Okklusion und instabilen Lichtverhältnissen.
     \end{listNorm}
     
     \item \textbf{Bewegungs-Levels (\ac{DoF}):}
     \begin{listNorm}
-        \item \textbf{Level a:} Translation in x, y, z (Rotationen $\alpha, \beta, \gamma$ im Controller fixiert).
-        \item \textbf{Level b:} Translation in x, y, z sowie Rotation um $\gamma$ (z-Achse). $\alpha, \beta$ fixiert.
-        \item \textbf{Level c:} Volle 6 Freiheitsgrade (Full \ac{DoF}).
+        \item \textbf{Level a:} Translation in x, y, z sowie Rotation um $\gamma$ (z-Achse). $\alpha, \beta$ fixiert.
+        \item \textbf{Level b:} Volle 6 Freiheitsgrade (Full \ac{DoF}).
     \end{listNorm}
 
+    \newpage
     \item \textbf{Stichproben/Bauteile:}
         \begin{listNorm}
             \item \textbf{Typ 1 (Texturiert, nicht spiegelnd):} Ein Bauteil mit ausgeprägter Textur und diffuser Oberfläche (z.\,B. ein beschriftetes Blatt Papier, siehe Abbildung \ref{fig:sample_type1}).
@@ -69,7 +68,7 @@ Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
     \\[1em] % Zeilenumbruch mit etwas vertikalem Abstand
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Figures/png/tasche.png} % Pfad anpassen
+        \includegraphics[width=\textwidth]{Figures/png/textur.png} % Pfad anpassen
         \caption{Typ 1: Texturiert, nicht spiegelnd}
         \label{fig:sample_type1}
     \end{subfigure}
@@ -112,7 +111,7 @@ Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden 
     
     \item \textbf{Ausschluss des 1\euro{}-Filters:} Dieser Filter fungiert als adaptiver Tiefpass auf Signalebene~\cite{casiez20121euro}. Da er ausschließlich auf den zeitlichen Ableitungen des Eingangssignals operiert und über kein internes physikalisches Modell des Prozesses verfügt, ist er prinzipbedingt nicht in der Lage, während einer vollständigen Okklusion (Blindphasen) eine Prädiktion der Feature-Trajektorie zu liefern. Für die Aufrechterhaltung der Stabilität des \ac{IBVS}-Regelkreises in dynamischen Szenarien ist eine modellbasierte Schätzung jedoch essenziell, weshalb dieser Filtertyp für die untersuchten Extrembedingungen nicht berücksichtigt wird~\cite{casiez20121euro}.
     
-    \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist in der Literatur hinreichend dokumentiert~\cite{chaumette2006visual, chaumette2007visual2}. Ziel dieser Arbeit ist die Evaluation der Robustheit unter industriellen Störbedingungen (Edge Cases). Da Szenario I keine Herausforderung für die Filter- und Entscheidungslogik darstellt und keine Differenzierung der Algorithmen ermöglicht, wird es als trivial eingestuft. Der Fokus liegt stattdessen auf der Belastbarkeit und Fehlertoleranz in den Szenarien II bis IV, um die Resilienz des Systems gegenüber unvorhergesehenen Umgebungsänderungen zu quantifizieren \cite{marchand2002virtual}.
+    % \item \textbf{Ausschluss von Szenario I:} Die Stabilität von \ac{IBVS}-Systemen unter Idealbedingungen ist in der Literatur hinreichend dokumentiert~\cite{chaumette2006visual, chaumette2007visual2}. Ziel dieser Arbeit ist die Evaluation der Robustheit unter industriellen Störbedingungen (Edge Cases). Da Szenario I keine Herausforderung für die Filter- und Entscheidungslogik darstellt und keine Differenzierung der Algorithmen ermöglicht, wird es als trivial eingestuft. Der Fokus liegt stattdessen auf der Belastbarkeit und Fehlertoleranz in den Szenarien II bis IV, um die Resilienz des Systems gegenüber unvorhergesehenen Umgebungsänderungen zu quantifizieren \cite{marchand2002virtual}.
 \end{listNorm}
 
 \section{Design of Experiments (DoE)}
@@ -123,64 +122,44 @@ Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gege
     \centering
     \caption{Definierte System-Konfigurationen für das Benchmarking.}
     \label{tab:versuchsmatrix}
-    \begin{tabular}{@{}lll@{}}
+    \begin{tabular}{@{}ll@{}}
         \toprule
-        \textbf{ID} & \textbf{Konfiguration} & \textbf{Beschreibung / Fokus} \\ \midrule
-        $C_1$ & Baseline & Reine Keypoint-Detektion (Referenzwert) \\
-        $C_2$ & \ac{EKF} & Zustandsschätzung mittels lokaler Linearisierung \\
-        $C_3$ & \ac{UKF} & Filterung mittels Unscented Transform \\
-        $C_4$ & \ac{ESKF} & Fehlerzustands-Filterung für Orientierungen \\
-        $C_5$ & \ac{EKF} + \ac{LR} & Kombination aus \ac{EKF} und Local-Rescue-Logik \\
-        $C_6$ & \ac{UKF} + \ac{LR} & Kombination aus \ac{UKF} und Local-Rescue-Logik \\
-        $C_7$ & \ac{ESKF} + \ac{LR} & Kombination aus \ac{ESKF} und Local-Rescue-Logik \\ \bottomrule
+        \textbf{Konfiguration} & \textbf{Beschreibung / Fokus} \\ \midrule
+        Baseline & Reine Keypoint-Detektion (Referenzwert) \\
+        \ac{EKF} & Zustandsschätzung mittels lokaler Linearisierung \\
+        \ac{UKF} & Filterung mittels Unscented Transform \\
+        \ac{ESKF} & Fehlerzustands-Filterung für Orientierungen \\
+        \ac{EKF} + \ac{LR} & Kombination aus \ac{EKF} und Local-Rescue-Logik \\
+        \ac{UKF} + \ac{LR} & Kombination aus \ac{UKF} und Local-Rescue-Logik \\
+        \ac{ESKF} + \ac{LR} & Kombination aus \ac{ESKF} und Local-Rescue-Logik \\ \bottomrule
     \end{tabular}
 \end{table}
-
-Die Auswahl der Testkombinationen folgt einer systematischen Matrix-Struktur, um die Forschungsfragen hinsichtlich Filter-Performance, Robustheitsgewinn durch \ac{LR} und Skalierbarkeit der Freiheitsgrade (Levels) zu beantworten. Die in Tabelle~\ref{tab:kombinationen_matrix} dargestellte Matrix definiert somit 30 Basiskombinationen, die durch die drei Stichproben-Typen auf insgesamt 90 experimentelle Kombinationen anwachsen. Dieser Aufbau erlaubt es, die Einflüsse von Geometrie (Levels), Störung (Szenarien) und Materialeigenschaft (Bauteile) systematisch zu isolieren.
-
-\begin{table}[H]
-    \centering
-    \caption{Matrix-Übersicht der Test-Kombinationen nach Level und Konfiguration.}
-    \label{tab:kombinationen_matrix}
-    \begin{tabular}{@{}llcccc@{}}
-        \toprule
-        \textbf{Level} & \textbf{Konfig.} & \textbf{Szen. II} & \textbf{Szen. III} & \textbf{Szen. IV} & \textbf{Summe} \\ \midrule
-        \textbf{a}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
-                       & $C_2$ -- $C_7$   & \checkmark        & --                 & --                & 6              \\ \cmidrule(lr){1-6}
-        \textbf{b}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
-                       & $C_2$ -- $C_7$   & \checkmark        & --                 & --                & 6              \\ \cmidrule(lr){1-6}
-        \textbf{c}     & $C_1$            & \checkmark        & \checkmark         & --                & 2              \\
-                       & $C_2$ -- $C_7$   & --                & \checkmark         & \checkmark        & 12             \\ \midrule
-        \textbf{Gesamt}&                  &                   &                    &                   & \textbf{30}    \\ \bottomrule
-    \end{tabular}
-\end{table}
-
+Jede der sieben Konfigurationen wird in den drei Szenarien (I bis III) und den zwei Bewegungs-Levels (a und b) getestet, was zu 42 einzigartigen Testkombinationen führt. Durch die Durchführung dieser Kombinationen für alle drei Bauteil-Typen ergibt sich ein Gesamtumfang von 126 experimentellen Bedingungen. Dieser Aufbau erlaubt es, die Einflüsse von Geometrie (Levels), Störung (Szenarien) und Materialeigenschaft (Bauteile) systematisch zu isolieren.
 
 \section{Versuchsplan und zeitliche Abschätzung}
 \label{subsec:versuchsplan}
+Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Da die Varianz der Messergebnisse nun über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
 
-Durch die Ausweitung der Versuchsreihen auf drei Bauteil-Typen ergeben sich insgesamt 90 zu untersuchende Kombinationen. Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Da die Varianz der Messergebnisse nun über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
-
-Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung. Mit 450 Einzelläufen bietet dieser Plan eine breite Datenbasis bei gleichzeitig handhabbarer Gesamtdauer.
+Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung. Mit 630 Einzelläufen bietet dieser Plan eine breite Datenbasis und kann auf zwei Arbeitstage aufgeteilt werden.
 
 \begin{table}[hbpt]
     \centering
-    \caption{Zeitliche Abschätzung für 90 Kombinationen (30 Matrixtests $\times$ 3 Bauteile).}
+    \caption{Zeitliche Abschätzung für 126 Kombinationen.}
     \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
         \toprule
-        \textbf{Stichprobe ($N$)} & \textbf{Anzahl Läufe (Gesamt)} & \textbf{Netto-Zeit} & \textbf{Brutto-Zeit (Faktor 1.5)} \\
+        \textbf{Stichprobe ($N$)} & \textbf{Anzahl Läufe (Gesamt)} & \textbf{Netto-Zeit} & \textbf{Brutto-Zeit (Faktor 2.0)} \\
         \midrule
-        3  & 270 & 135\,min & 3,375\,h \\
-        \textbf{5}  & \textbf{450} & \textbf{225\,min} & \textbf{5,625\,h} \\
-        10 & 900 & 450\,min & 11,250\,h \\
+        3           & 378           & 189\,min          & 6,3\,h \\
+        \textbf{5}  & \textbf{630}  & \textbf{315\,min} & \textbf{10,50\,h} \\
+        10          & 1.260         & 630\,min          & 21\,h \\
         \bottomrule
     \end{tabularx}
     \label{tab:zeitliche_abschaetzung}
 \end{table}
 
-Auf Basis dieser Kalkulation wird $N=5$ gewählt. Dies ermöglicht eine umfassende Abdeckung des Versuchsraums über alle Bauteil-Typen hinweg bei einer Brutto-Versuchszeit von knapp unter sechs Stunden.
+Auf Basis dieser Kalkulation wird $N=5$ gewählt. Dies ermöglicht eine umfassende Abdeckung des Versuchsraums über alle Bauteil-Typen hinweg bei einer Brutto-Versuchszeit von ca. 10,50 Stunden.
 
-Hinsichtlich des Versuchsablaufs wird für jede der 90 Kombinationen zu Beginn eine neue Initialisierung durchgeführt, bei der ein dedizierter Referenzdatensatz aufgenommen wird. Diese Referenz bleibt für alle fünf zugehörigen Testläufe ($N=5$) unverändert. Dieses Vorgehen wird aus zwei Gründen gewählt:
+Hinsichtlich des Versuchsablaufs wird für jede der 126 Kombinationen zu Beginn eine neue Initialisierung durchgeführt, bei der ein dedizierter Referenzdatensatz aufgenommen wird. Diese Referenz bleibt für alle fünf zugehörigen Testläufe ($N=5$) unverändert. Dieses Vorgehen wird aus zwei Gründen gewählt:
 \begin{enumerate}
     \item \textbf{Isolierung von Störeinflüssen:} Durch die konstante Referenz innerhalb einer Testreihe wird sichergestellt, dass die gemessene Varianz in den Evaluierungsmetriken primär auf die dynamischen Störungen der Szenarien (z.\,B. Okklusionen oder Lichtwechsel) zurückzuführen ist. Würde für jeden Lauf eine neue Initialisierung erfolgen, könnten geringfügige Abweichungen im Referenzmodell (z.\,B. durch Sensorrauschen während der Aufnahme) die Ergebnisse überlagern und die Vergleichbarkeit einschränken.
     \item \textbf{Praxisnähe:} Das Vorgehen bildet einen typischen industriellen Prozess ab, bei dem ein System einmalig für eine Aufgabe initialisiert wird, um anschließend eine Serie von Arbeitszyklen unter schwankenden Umgebungsbedingungen stabil auszuführen.
