@@ -74,15 +74,15 @@ Sobald eine neue Messung der Pixelkoordinaten $\mathbf{z}_k = [u_{\text{gemessen
 \end{enumerate}
 
 \newpage
-\section{Ausreißererkennung mittels \\Mahalanobis-Distanz}
+\section{Ausreißererkennung mittels \mbox{Mahalanobis-Distanz}}
 \label{sec:MahalanobisGating}
-Feature-Matcher sind anfällig für falsche Assoziationen (\textit{False Positives}) durch Clutter oder Reflexionen. Die Integration solcher Ausreißer führt zur Divergenz der Zustandsschätzung. Um dies zu verhindern, wird ein Gating-Verfahren angewendet, das Messungen vor dem Update-Schritt auf statistische Plausibilität prüft. \todo[author=Paul]{Quelle für Malahnobis-Distanz}
+Feature-Matcher sind anfällig für falsche Assoziationen (\textit{False Positives}) durch Clutter oder Reflexionen. Die Integration solcher Ausreißer führt zur Divergenz der Zustandsschätzung. Um dies zu verhindern, wird ein Gating-Verfahren angewendet, das Messungen vor dem Update-Schritt auf statistische Plausibilität prüft~\cite{collins1992efficient, thrun2005probabilistic}.
 
 Anstelle der euklidischen Distanz wird die Mahalanobis-Distanz verwendet. Sie gewichtet das Residuum $\tilde{\mathbf{y}}_k$ mit der Innovationskovarianz $S_k$:
 \begin{equation}
     D^2 = \tilde{\mathbf{y}}_k^T S_k^{-1} \tilde{\mathbf{y}}_k
 \end{equation}
-Dies hat den Vorteil, dass die Distanz mit Berücksichtigung der Unsicherheit des Systems und der Messung skaliert wird.
+Dies hat den Vorteil, dass die Distanz mit Berücksichtigung der Unsicherheit des Systems und der Messung skaliert wird~\cite{durrant1990toward, thrun2005probabilistic}.
 
 Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verteilung mit $m$ Freiheitsgraden (\ac{DoF}). Um eine Messung zu validieren, wird ein Konfidenzintervall gewählt und der entsprechende Schwellenwert $\gamma$ aus der $\chi^2$-Tabelle entnommen (siehe Tabelle~\ref{tab:chi_square})~\cite{bar2001estimation}.
 
@@ -104,7 +104,7 @@ Unter der Annahme von normalverteiltem Rauschen folgt $D^2$ einer $\chi^2$-Verte
         $\vdots$ & $\vdots$ & $\vdots$ \\
         \bottomrule
     \end{tabular}
-    \caption{Auszug aus der $\chi^2$-Verteilungstabelle für das Measurement-Gating~\cite{bar2001estimation}.}
+    \caption{Auszug aus der $\chi^2$-Verteilungstabelle für das Measurement-Gating.}
     \label{tab:chi_square}
 \end{table}
 
