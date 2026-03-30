@@ -164,6 +164,9 @@
 	\Square\ #1\quad%
 }
 
+% Euro symbol
+\usepackage{eurosym}
+
 %formeln
 \usepackage{amsmath}
 
@@ -295,21 +298,9 @@
 {\color{black}\thesubsection}{0.5em}{}
 
 
-%%%%% modern BibLaTeX with biber for bibliography %%%%%
-% https://golatex.de/viewtopic.php?t=13917
-\usepackage[style=ieee, backend=biber, sorting=none, natbib=true]{biblatex}
-%\usepackage[style=ieee-alphabetic,backend=biber, natbib=true]{biblatex}
-%\usepackage[sorting=none, style=numeric,backend=biber, natbib=true]{biblatex}
-%\usepackage[style=apa, backend=biber, natbib=true, sorting=nyt, sortcites=false]{biblatex}
-%\usepackage[style=numeric, backend=biber, natbib=true, sorting=nyt, sortcites=false]{biblatex}
-%\usepackage[ style=numeric, backend=biber, natbib=true]{biblatex}
-
-\addbibresource{bibliography.bib}
-
-% Always show short author if available
-\makeatletter
-\def\cbx@apa@ifnamesaved{\@firstoftwo}
-\makeatother
+%%%%% Bibliography with natbib and BibTeX (stable on macOS) %%%%%
+\usepackage[square,comma,numbers]{natbib}
+\bibliographystyle{unsrtnat}
 
 
 
@@ -430,19 +421,10 @@
 
 	%% If you want to change the bibliography heading, you can do so by using the following line
 	\renewcommand*{\refname}{Literaturverzeichnis}
-
-	%\bibliographystyle{plain} % Numbers in square brackets
-	%%\bibliographystyle{alpha} % Initials of first author and year
-
-	% If you want to use the following style, you must activate
-	% \usepackage{harvard} % before \begin{document}
-	%\bibliographystyle{agsm} % Authors in round brackets
-	%\newpage
+	
 	\clearpage
 	\phantomsection % Otherwise incorrect linking in the table of contents
-	\printbibliography[heading=bibintoc]    % Without chapter number/letter
-	
-	%\printbibliography[heading=bibnumbered]    % With chapter number/letter
+	\bibliography{bibliography}
 	
 	\input{TeXFiles/120_Declaration}
 \end{document}
