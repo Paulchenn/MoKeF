@@ -1,8 +1,29 @@
 \chapter{Feature Confidence und Switching Strategie}
 \label{ch:FeatureConfidenceundSwitchingStrategie}
 
-\section{Motivation}
-\label{sec:Motivation}
+\section{Definitionen und theoretische Grundlagen}
+\label{sec:Definitionen}
+
+Um die Mechanismen des prädiktionsbasierten Matchings formal zu beschreiben, müssen die Begriffe der \textit{Feature Confidence} und der \textit{Switching Strategie} im Kontext der Computer Vision und Zustandsschätzung definiert werden.
+
+\subsection{Feature Confidence}
+Die \textbf{Feature Confidence} (dt. Merkmalssicherheit) beschreibt ein probabilistisches Maß für die Zuverlässigkeit, mit der ein Bildmerkmal im aktuellen Frame detektiert und korrekt assoziiert werden kann. Sie setzt sich in der Regel aus zwei Komponenten zusammen:
+
+\begin{enumerate}
+    \item \textbf{Deskriptor-Konfidenz:} Die Unterscheidbarkeit eines Merkmals gegenüber anderen Kandidaten im Bildraum. Ein klassisches Maß hierfür ist die \textit{Ratio Test Distance} nach \cite{lowe2004sift}, welche das Verhältnis zwischen dem besten und dem zweitbesten Match bewertet.
+    \item \textbf{Geometrische Konfidenz:} Die Übereinstimmung der Messung mit der prädizierten Position im Zustandsraum. Diese wird häufig über den Mahalanobis-Abstand zwischen Messung und Prädiktion unter Berücksichtigung der Kovarianzmatrix des Filters bestimmt \cite{bar2001estimation}.
+\end{enumerate}
+
+Wissenschaftlich lässt sich die Konfidenz als eine A-posteriori-Wahrscheinlichkeit $P(z_t | Z_{1:t-1})$ interpretieren, wobei $z_t$ die aktuelle Messung und $Z_{1:t-1}$ die Historie der Merkmalsbewegungen darstellt.
+
+\subsection{Switching Strategie}
+Unter einer \textbf{Switching Strategie} versteht man die Entscheidungslogik, die zwischen verschiedenen Matching-Modi (Global Search vs. Local Guided Matching) wechselt. Ziel ist es, die Robustheit des Tracking-Systems gegenüber transienten Störungen (Okklusionen, Bewegungsunschärfe) zu erhöhen, ohne die Echtzeitfähigkeit zu gefährden.
+
+Nach \cite{hartley2003multiple} und \cite{chli2008active} (Active Matching) ist ein permanentes globales Matching (\textit{Bottom-up}) rechenintensiv und fehleranfällig für Ausreißer. Die Switching Strategie agiert als Kontrollinstanz:
+\begin{itemize}
+    \item \textbf{Normalbetrieb:} Globales Matching zur Detektion neuer Merkmale.
+    \item \textbf{Rescue-Mode:} Bei Unterschreiten einer Konfidenzschwelle wird auf ein prädiktionsbasiertes Fenster-Matching (\textit{Top-down}) umgeschaltet, um den \enquote{Track} des Keypoints aufrechtzuerhalten.
+\end{itemize}
 
 \section{Prädiktionsbasiertes Local-Rescue-Matching}
 \label{sec:LocalRescue}
