@@ -63,25 +63,24 @@ Der theoretische Versuchsraum spannt sich aus fünf Dimensionen auf:
         \label{fig:szenario_lichtwechsel}
     \end{subfigure}
     \hfill\null
-    \\[1em] % Zeilenumbruch mit etwas vertikalem Abstand
+    \\[1em]
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Figures/png/textur.png} % Pfad anpassen
+        \includegraphics[width=\textwidth]{Figures/png/textur.png}
         \caption{Typ 1: Texturiert, nicht spiegelnd}
         \label{fig:sample_type1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        % \missingfigure{}
-        \includegraphics[width=\textwidth]{Figures/png/leiterplatte.png} % Pfad anpassen
+        \includegraphics[width=\textwidth]{Figures/png/leiterplatte.png}
         \caption{Typ 2: Texturiert, spiegelnd}
         \label{fig:sample_type2}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{Figures/png/block.png} % Pfad anpassen
+        \includegraphics[width=\textwidth]{Figures/png/block.png}
         \caption{Typ 3: Wenig Textur, stark spiegelnd}
         \label{fig:sample_type3}
     \end{subfigure}
@@ -114,7 +113,7 @@ Um den Umfang der Experimente auf ein realisierbares Maß zu reduzieren, werden 
 
 \section{Design of Experiments (DoE)}
 \label{subsec:doe}
-Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gegen die relevanten Szenarien und Levels getestet werden. Um die Robustheit gegenüber unterschiedlichen Oberflächenbeschaffenheiten zu validieren, wird jede dieser Testreihen für die in Abschnitt~\ref{subsec:versuchsraum} definierten Bauteil-Typen Typ 1 sowie Typ 2 durchgeführt.
+Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert. Die in Tabelle~\ref{tab:kombinationen_matrix} dargestellte erste Versuchsmatrix bezieht sich zunächst ausschließlich auf Level a. Innerhalb dieses Levels beschränkt sich die Relativbewegung zwischen Start- und Zielpose auf Translationen in x, y und z sowie eine Rotation um die z-Achse. Um die Robustheit gegenüber unterschiedlichen Oberflächenbeschaffenheiten zu validieren, wird jede dieser Testreihen für die in Abschnitt~\ref{subsec:versuchsraum} definierten Bauteil-Typen Typ 1 sowie Typ 2 durchgeführt.
 
 \begin{table}[h]
     \centering
@@ -133,11 +132,11 @@ Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert, die gege
     \end{tabular}
 \end{table}
 
-Um die Anzahl der Testkombinationen zu reduzieren, wird bei Bauteil Typ 3 ausschließlich der \ac{ESKF} getestet (siehe Tabelle~\ref{tab:kombinationen_matrix}). Die Wahl des \ac{ESKF} basiert auf den Ergebnissen der Messungen bei den Bauteil-Typen 1 und 2 und wird in Abschnitt~\ref{ch:ergebnisse} näher begründet.
+Um die Anzahl der Testkombinationen zu reduzieren, wird bei Bauteil Typ 3 innerhalb von Level a ausschließlich der \ac{ESKF} getestet (siehe Tabelle~\ref{tab:kombinationen_matrix}). Die Wahl des \ac{ESKF} basiert auf den Ergebnissen der Messungen bei den Bauteil-Typen 1 und 2 und wird in Abschnitt~\ref{ch:ergebnisse} näher begründet.
 
 \begin{table}[H]
     \centering
-    \caption{Matrix-Übersicht der Test-Kombinationen nach Level und Konfiguration.}
+    \caption{Matrix-Übersicht der Test-Kombinationen für Level a nach Konfiguration.}
     \label{tab:kombinationen_matrix}
     \begin{tabular}{@{}cccccccccc@{}}
         \toprule
@@ -155,30 +154,64 @@ Um die Anzahl der Testkombinationen zu reduzieren, wird bei Bauteil Typ 3 aussch
     \end{tabular}
 \end{table}
 
-Durch die Durchführung dieser Kombinationen ergibt sich ein Gesamtumfang von 51 experimentellen Bedingungen. Dieser Aufbau erlaubt es, die Einflüsse von Geometrie (Levels), Störung (Szenarien) und Materialeigenschaft (Bauteile) systematisch zu isolieren.
+Dies ergibt insgesamt 51 experimentelle Bedingungen für Level a, die eine systematische Isolierung der Einflussfaktoren Szenario, Materialeigenschaft und Konfiguration ermöglichen.
+
+Die Level-b-Testreihe wurde mit reduziertem Umfang ausschließlich für Bauteil Typ 2 durchgeführt, um die zusätzlichen Rotationsfreiheitsgrade $\alpha$ und $\beta$ des \ac{IBVS}-Controllers zu validieren. Typ 2 bietet durch seine Kombination aus ausgeprägter Texturierung und spiegelnden Oberflächeneigenschaften einen praxisnahen, anspruchsvollen Testfall. Die Evaluierung beschränkt sich auf Szenario I und II sowie die Konfigurationen $C_1$, $C_4$ und $C_7$. Diese Auswahl wird durch die Level-a-Ergebnisse begründet und in Abschnitt~\ref{ch:ergebnisse} detailliert dargelegt.
+
+\begin{table}[H]
+    \centering
+    \caption{Matrix-Übersicht der Test-Kombinationen für Level b nach Konfiguration.}
+    \label{tab:kombinationen_matrix_level_b}
+    \begin{tabular}{@{}cccccccccc@{}}
+        \toprule
+        \textbf{Bauteil} & \textbf{Szenario} & \textbf{$C_1$} & \textbf{$C_2$} & \textbf{$C_3$} & \textbf{$C_4$} & \textbf{$C_5$} & \textbf{$C_6$} & \textbf{$C_7$} & \textbf{Summe}\\ \midrule
+        \multirow{2}{*}{\textbf{Typ 2}} & \textbf{I} & \checkmark & - & - & \checkmark & - & - & \checkmark & 3\\
+         & \textbf{II} & \checkmark & - & - & \checkmark & - & - & \checkmark & 3\\ \midrule
+        \textbf{Gesamt} & & 2 & 0 & 0 & 2 & 0 & 0 & 2 & \textbf{6} \\ \bottomrule
+    \end{tabular}
+\end{table}
+
+Damit ergeben sich für Level b weitere 6 experimentelle Bedingungen.
 
 \section{Versuchsplan und zeitliche Abschätzung}
 \label{subsec:versuchsplan}
-Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Da die Varianz der Messergebnisse nun über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
+Um den experimentellen Gesamtaufwand in einem realisierbaren Rahmen zu halten, wird die Stichprobengröße pro Kombination auf $N=5$ festgesetzt. Für die in Tabelle~\ref{tab:kombinationen_matrix} dargestellten 51 Kombinationen in Level a ergibt sich daraus die folgende Zeitplanung. Da die Varianz der Messergebnisse hier über drei verschiedene physikalische Bauteile hinweg beobachtet wird, ist diese Reduktion der Wiederholungen pro Einzelkombination methodisch zulässig.
 
-Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung. Mit 255 Einzelläufen bietet dieser Plan eine breite Datenbasis und kann auf ein bis zwei Arbeitstage aufgeteilt werden.
+Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung für Level a. Mit 255 Einzelläufen bietet dieser Plan eine breite Datenbasis und kann auf ein bis zwei Arbeitstage aufgeteilt werden.
 
 \begin{table}[hbpt]
     \centering
-    \caption{Zeitliche Abschätzung für 126 Kombinationen.}
+    \caption{Zeitliche Abschätzung für 51 Kombinationen in Level a.}
     \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
         \toprule
         \textbf{Stichprobe ($N$)} & \textbf{Anzahl Läufe (Gesamt)} & \textbf{Netto-Zeit\newline(1,5\,min/Lauf)} & \textbf{Brutto-Zeit (Faktor 1,5)} \\
         \midrule
         3           & 153           & 229,5\,min          & 5,735\,h \\
         \textbf{5}  & \textbf{255}  & \textbf{382,5\,min} & \textbf{9,5625\,h} \\
-        10          & 510           & 765\,min          & 19,125\,h \\
+        10          & 510           & 765\,min            & 19,125\,h \\
         \bottomrule
     \end{tabularx}
     \label{tab:zeitliche_abschaetzung}
 \end{table}
 
-Hinsichtlich des Versuchsablaufs wird für jede der 51 Kombinationen zu Beginn eine neue Initialisierung durchgeführt, bei der ein dedizierter Referenzdatensatz aufgenommen wird. Diese Referenz bleibt für alle fünf zugehörigen Testläufe ($N=5$) unverändert. Dieses Vorgehen wird aus zwei Gründen gewählt:
+Für die ergänzende Level-b-Testreihe mit 6 Kombinationen ergibt sich die in Tabelle~\ref{tab:zeitliche_abschaetzung_level_b} dargestellte zusätzliche Zeitplanung.
+
+\begin{table}[hbpt]
+    \centering
+    \caption{Zeitliche Abschätzung für 6 Kombinationen in Level b.}
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+        \toprule
+        \textbf{Stichprobe ($N$)} & \textbf{Anzahl Läufe (Gesamt)} & \textbf{Netto-Zeit\newline(1,5\,min/Lauf)} & \textbf{Brutto-Zeit (Faktor 1,5)} \\
+        \midrule
+        3           & 18            & 27\,min            & 0,675\,h \\
+        \textbf{5}  & \textbf{30}   & \textbf{45\,min}   & \textbf{1,125\,h} \\
+        10          & 60            & 90\,min            & 2,25\,h \\
+        \bottomrule
+    \end{tabularx}
+    \label{tab:zeitliche_abschaetzung_level_b}
+\end{table}
+
+Hinsichtlich des Versuchsablaufs wird sowohl für die 51 Kombinationen in Level a als auch für die 6 Kombinationen in Level b zu Beginn jeder Kombination eine neue Initialisierung durchgeführt, bei der ein dedizierter Referenzdatensatz aufgenommen wird. Diese Referenz bleibt für alle fünf zugehörigen Testläufe ($N=5$) unverändert. Dieses Vorgehen wird aus zwei Gründen gewählt:
 \begin{enumerate}
     \item \textbf{Isolierung von Störeinflüssen:} Durch die konstante Referenz innerhalb einer Testreihe wird sichergestellt, dass die gemessene Varianz in den Evaluierungsmetriken primär auf die dynamischen Störungen der Szenarien (z.\,B. Okklusionen oder Lichtwechsel) zurückzuführen ist. Würde für jeden Lauf eine neue Initialisierung erfolgen, könnten geringfügige Abweichungen im Referenzmodell (z.\,B. durch Sensorrauschen während der Aufnahme) die Ergebnisse überlagern und die Vergleichbarkeit einschränken.
     \item \textbf{Praxisnähe:} Das Vorgehen bildet einen typischen industriellen Prozess ab, bei dem ein System einmalig für eine Aufgabe initialisiert wird, um anschließend eine Serie von Arbeitszyklen unter schwankenden Umgebungsbedingungen stabil auszuführen.
@@ -222,5 +255,4 @@ Die Bewertung erfolgt anhand dreier Hauptkriterien:
     \end{listAlph}
 \end{enumerate}
 
-\todo[inline]{Hier noch Benchmarking-Erweiterung für full Rotation und ggf. local rescue.}
 %% End of File %%
