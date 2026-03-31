@@ -1,84 +1,43 @@
-\chapter{Keypoint-Datenbank}
-\label{chap:keypoint_datenbank}
+\section{Keypoint-Datenbank}
+\label{sec:keypoint_datenbank}
 
-Dieses Kapitel beschreibt die in der vorliegenden Arbeit verwendete Keypoint-Datenbank. Sie bildet die Grundlage für die spätere Wiedererkennung von Bildmerkmalen und stellt damit eine zentrale Schnittstelle zwischen Initialisierung, Merkmalsabgleich und Regelung dar. Ziel der Datenbank ist es, eine konsistente Menge stabiler Referenzmerkmale bereitzustellen, auf die auch dann zurückgegriffen werden kann, wenn einzelne Keypoints im aktuellen Kamerabild nur unsicher oder gar nicht detektiert werden. Die Datenbank dient somit als strukturierte Repräsentation der gewünschten Merkmalslage und unterstützt insbesondere den robusten Betrieb des \ac{IBVS}-Systems bei Reflexionen, kurzzeitigen Sichtverlusten und instabiler Wahrnehmung. 
+Für die robuste Zuordnung von Bildmerkmalen im IBVS-System wird eine zweistufige Keypoint-Verwaltung eingesetzt. Diese besteht aus einer während der Initialisierung aufgebauten Referenzdatenbank sowie einem laufzeitseitigen Abgleichskontext. Während die Referenzdatenbank den festen Sollzustand der relevanten Bildmerkmale beschreibt, unterstützt der Laufzeitkontext die Wiederzuordnung dieser Merkmale im Regelbetrieb.
 
-Im implementierten System wird diese Datenbank nicht als externe relationale Datenbank verstanden, sondern als lokale, speicherinterne Referenzstruktur innerhalb der Referenzverwaltung. Sie wird während einer Initialisierungsphase aufgebaut, in der mehrere Keypoint-Beobachtungen gesammelt, zusammengeführt und anschließend zu einer kompakten Referenzmenge verdichtet werden. Die resultierenden Referenz-Keypoints werden danach auf dem Topic \texttt{/ibvs/reference/keypoints} veröffentlicht und von nachgelagerten Komponenten, insbesondere dem Descriptor Matcher und dem Regler, als konstante Sollgröße verwendet. 
+\subsection{Aufbau der Referenzdatenbank}
+\label{subsec:aufbau_referenzdatenbank}
 
-\section{Motivation der Keypoint-Datenbank}
-\label{sec:motivation_keypoint_datenbank}
+Die Referenzdatenbank wird in einer separaten Initialisierungsphase erzeugt. Hierzu werden die vom Keypoint-Detektor gelieferten Merkmale nicht unmittelbar übernommen, sondern zunächst in einer temporären Kandidatenstruktur gesammelt. Ziel ist es, nur solche Keypoints in die spätere Referenz zu überführen, die über mehrere Frames hinweg stabil beobachtet werden.
 
-Die Motivation für eine eigene Keypoint-Datenbank ergibt sich aus den besonderen Anforderungen des betrachteten Anwendungsfalls. Bei reflektierenden oder metallischen Objekten können Bildmerkmale im Kamerabild zeitweise verschwinden, ihre Position verändern oder aufgrund lokaler Überbelichtung nicht mehr stabil beschrieben werden. Eine rein frameweise Verarbeitung ohne persistente Referenzbasis würde in solchen Situationen dazu führen, dass der Merkmalsabgleich instabil wird oder vollständig ausfällt. Genau an dieser Stelle setzt die Referenzdatenbank an: Sie speichert eine konsolidierte Menge relevanter Merkmale, die während der Initialisierung aufgenommen wurde und später als robuste Bezugsgröße dient. 
+Die Zuordnung neuer Beobachtungen zu bestehenden Kandidaten erfolgt anhand ihrer Bildposition und, sofern verfügbar, zusätzlich anhand der Ähnlichkeit ihrer Deskriptoren. Wird ein Keypoint einem vorhandenen Kandidaten zugeordnet, so werden dessen Position, Beobachtungszähler und Deskriptor aktualisiert. Letzterer wird dabei über eine exponentielle Glättung fortgeschrieben, um Einzelrauschen zu reduzieren.
 
-Die Referenzdatenbank erfüllt dabei mehrere Aufgaben gleichzeitig. Erstens definiert sie die gewünschte Bildlage der Merkmale für den visuellen Regelkreis. Zweitens stellt sie die zugehörigen Deskriptoren für den späteren Merkmalsabgleich bereit. Drittens stabilisiert sie das Gesamtsystem, weil nachgelagerte Komponenten nicht ausschließlich auf die momentane Sichtbarkeit einzelner Bildpunkte angewiesen sind. Im weiteren Verlauf des Systems wird diese Referenzbasis sowohl vom globalen Descriptor Matching als auch von ergänzenden Strategien wie Local Rescue und modellgestützter Filterung genutzt. 
+Nach Abschluss der Initialisierungsphase werden die Kandidaten anhand ihrer Beobachtungshäufigkeit bewertet und die stabilsten Einträge ausgewählt. Diese bilden die Referenzdatenbank. Sie enthält die Bildkoordinaten der Referenz-Keypoints, ihre Deskriptoren sowie statistische Informationen zur Stabilität der Beobachtung. Die Referenzdatenbank wird anschließend veröffentlicht und im weiteren Verlauf des Systems als feste Sollstruktur verwendet.
 
-\section{Struktur der gespeicherten Keypoints}
-\label{sec:struktur_gespeicherter_keypoints}
+\subsection{Verwendung im Matching}
+\label{subsec:verwendung_im_matching}
 
-Während der Initialisierungsphase verwaltet der Referenzmanager zunächst eine Kandidatenmenge. Jeder Kandidat wird intern durch eine eindeutige Kandidaten-ID, eine zweidimensionale Bildposition \((u,v)\), einen optionalen Deskriptor, eine Auftretenshäufigkeit sowie eine akkumulierte Bewertung repräsentiert. In der Implementierung entspricht dies den Attributen \texttt{cid}, \texttt{xy}, \texttt{desc}, \texttt{count} und \texttt{score\_sum}. Damit enthält die Datenstruktur genau diejenigen Informationen, die für die spätere Verdichtung in eine stabile Referenzmenge benötigt werden. 
+Im laufenden Betrieb dient die Referenzdatenbank als Grundlage für den Abgleich zwischen aktuellem Kamerabild und Referenzzustand. Die gespeicherten Referenzdeskriptoren werden in der Matching-Komponente eingelesen, normiert und mit den normierten Deskriptoren der aktuell detektierten Keypoints verglichen. Aus diesem Vergleich ergibt sich für jeden aktuellen Keypoint die ähnlichste Referenzbeschreibung.
 
-Nach Abschluss der Aufnahmephase wird aus der Kandidatenmenge eine eigentliche Referenzdatenbank erzeugt. Diese besteht im Kern aus den Referenzpositionen \texttt{ref\_xy}, den zugehörigen Referenzdeskriptoren \texttt{ref\_desc} sowie der Auftretenshäufigkeit \texttt{ref\_counts}. Für den späteren Merkmalsabgleich sind insbesondere die Bildpositionen, die Deskriptordimension und die zugehörigen Deskriptorvektoren relevant. Die Referenzdatenbank speichert damit nicht nur, \emph{wo} sich ein Merkmal im Sollbild befindet, sondern auch, \emph{wie} dieses Merkmal deskriptiv beschrieben wird. 
+Die Ähnlichkeit zwischen aktuellem und referenzseitigem Deskriptor kann durch
 
-\section{Aufbau der Datenbank während der Initialisierung}
-\label{sec:aufbau_datenbank_initialisierung}
-
-Der Aufbau der Keypoint-Datenbank erfolgt im implementierten System über eine explizite Capture-Phase. Diese wird über den Session Manager angestoßen, indem ein Service aufgerufen wird, der die Referenzaufnahme startet. Während dieser Phase werden über mehrere Sekunden hinweg Keypoint-Messungen gesammelt. Die Dauer der Aufnahme ist parametrierbar und wird standardmäßig über \texttt{init\_duration\_sec} vorgegeben. Erst nach erfolgreichem Abschluss dieser Phase wird die Initialisierung über \texttt{/ibvs/init\_done} als beendet markiert. 
-
-Beim Eingang neuer Keypoints prüft der Referenzmanager für jedes Merkmal, ob bereits ein ähnlicher Kandidat in der Datenbank vorhanden ist. Hierzu wird zunächst eine räumliche Nachbarschaftssuche durchgeführt. Nur Kandidaten innerhalb eines maximalen Pixelabstands \texttt{max\_px\_dist} kommen für eine Zuordnung infrage. Anschließend wird, sofern Deskriptoren verfügbar sind, die Ähnlichkeit zwischen dem neuen Merkmal und den vorhandenen Kandidaten ausgewertet. Wird ein ausreichend ähnlicher Kandidat gefunden, so wird dieser aktualisiert; andernfalls wird ein neuer Kandidat in die Datenbank eingefügt. Auf diese Weise entsteht schrittweise eine konsolidierte Merkmalsbasis aus mehreren Beobachtungen. 
-
-\newpage
-\section{Ähnlichkeitsmaß und Wiedererkennungslogik}
-\label{sec:aehnlichkeitsmass_wiedererkennungslogik}
-
-Für die Zuordnung zwischen neu beobachteten Keypoints und bereits gespeicherten Kandidaten verwendet die Implementierung eine Cosinus-Ähnlichkeit der Deskriptoren. Für zwei Deskriptorvektoren \(\mathbf{a}\) und \(\mathbf{b}\) wird diese durch
 \begin{equation}
-\mathrm{sim}(\mathbf{a},\mathbf{b}) =
-\frac{\mathbf{a}^{\top}\mathbf{b}}
-{\lVert \mathbf{a} \rVert \, \lVert \mathbf{b} \rVert}
+S_{ij} = \mathbf{d}^{\mathrm{cur}}_i \cdot \mathbf{d}^{\mathrm{ref}}_j
 \end{equation}
-berechnet. Liegen die Normen der Deskriptoren zu nahe bei Null, wird die Ähnlichkeit in der Implementierung als ungültig behandelt. Die Cosinus-Ähnlichkeit eignet sich hier besonders, weil sie direkt den Winkel zwischen zwei Merkmalsvektoren bewertet und damit robust gegenüber reinen Skalierungsunterschieden der Deskriptorbeträge ist. 
 
-Ein Kandidat wird dann als passender Datenbankeintrag betrachtet, wenn er sowohl räumlich nahe genug liegt als auch eine hinreichend hohe Deskriptorähnlichkeit aufweist. Die dafür verwendete Schwellwertprüfung erfolgt über den Parameter \texttt{desc\_match\_threshold}, der standardmäßig auf \(0{,}85\) gesetzt ist. Existieren keine Deskriptoren, kann die Zuordnung ersatzweise allein über die räumliche Nähe erfolgen. Für den späteren Descriptor Matcher wird die gleiche Grundidee erneut verwendet: Auch dort wird die Referenzdatenbank als Menge normierter Referenzdeskriptoren gecacht und mit aktuellen Merkmalsdeskriptoren verglichen. 
+beschrieben werden. Dabei bezeichnen $\mathbf{d}^{\mathrm{cur}}_i$ den normierten Deskriptor des aktuellen Keypoints $i$ und $\mathbf{d}^{\mathrm{ref}}_j$ den normierten Deskriptor des Referenz-Keypoints $j$. Aufgrund der Normierung entspricht dieser Ausdruck einer Cosinus-Ähnlichkeit.
 
-\section{Aktualisierung und Verdichtung der Datenbank}
-\label{sec:aktualisierung_verdichtung_datenbank}
+Eine Korrespondenz wird nur dann übernommen, wenn die Ähnlichkeit einen vorgegebenen Schwellwert überschreitet. Zusätzlich kann eine wechselseitige Konsistenzprüfung verwendet werden, um mehrdeutige Zuordnungen zu reduzieren. Auf diese Weise liefert die Referenzdatenbank eine stabile Grundlage für die Bestimmung robuster Punktkorrespondenzen zwischen aktuellem Bild und Zielzustand.
 
-Wird ein neues Merkmal einem bestehenden Kandidaten zugeordnet, so wird der Eintrag nicht nur gezählt, sondern auch inhaltlich aktualisiert. Die Auftretenshäufigkeit \texttt{count} wird erhöht, die aktuelle Bildposition übernommen und die akkumulierte Bewertungsgröße \texttt{score\_sum} fortgeschrieben. Für den Deskriptor wird eine exponentielle Glättung verwendet. Ist \(\mathbf{d}_{k}\) der bisherige Kandidatendeskriptor, \(\mathbf{d}_{\mathrm{neu}}\) der neu beobachtete Deskriptor und \(\alpha\) der Parameter \texttt{desc\_ema\_alpha}, so ergibt sich die Aktualisierung zu
-\begin{equation}
-\mathbf{d}_{k+1} = (1-\alpha)\,\mathbf{d}_{k} + \alpha\,\mathbf{d}_{\mathrm{neu}}.
-\end{equation}
-Dadurch wird der gespeicherte Deskriptor schrittweise an wiederholt beobachtete Ausprägungen angepasst, ohne dass einzelne Messungen den Kandidaten abrupt verändern. 
+\subsection{Laufzeitseitiger Abgleichskontext}
+\label{subsec:laufzeitseitiger_abgleichskontext}
 
-Nach Ende der Capture-Phase wird die Kandidatenmenge verdichtet. Hierzu werden alle Kandidaten nach ihrer Auftretenshäufigkeit sortiert und nur die \(K\) stabilsten Einträge übernommen. Die maximale Anzahl dieser Referenzmerkmale wird über \texttt{ref\_top\_k} festgelegt. Formal kann die endgültige Referenzmenge als
-\begin{equation}
-\mathcal{R} = \{ c_1, c_2, \dots, c_K \}
-\end{equation}
-aufgefasst werden, wobei die ausgewählten Kandidaten die höchsten Werte von \texttt{count} besitzen. Diese Verdichtung stellt sicher, dass die spätere Referenzdatenbank nicht aus allen jemals beobachteten Punkten besteht, sondern gezielt aus den stabilsten und wiederholt nachgewiesenen Merkmalen. 
+Neben der festen Referenzdatenbank wird im laufenden Betrieb ein dynamischer Abgleichskontext genutzt. Dieser stellt keine zweite Referenzdatenbank im engeren Sinn dar, sondern eine Hilfsstruktur, die aus bereits gefilterten Zuordnungen früherer Zeitschritte gewonnen wird. Gespeichert werden dabei insbesondere Referenz-IDs, geschätzte Bildpositionen und Unsicherheitsmaße.
 
-\section{Bereitstellung der Referenzdaten}
-\label{sec:bereitstellung_referenzdaten}
+Dieser Kontext wird dann relevant, wenn das globale Deskriptormatching allein nicht ausreicht, beispielsweise bei Reflexionen, kurzzeitigen Verdeckungen oder instabiler Merkmalsdetektion. In solchen Situationen kann für bekannte Referenzpunkte eine lokale Nachsuche in der Umgebung ihrer erwarteten Bildposition durchgeführt werden. Dabei werden sowohl die räumliche Nähe zur vorhergesagten Position als auch die Deskriptorähnlichkeit zur zugehörigen Referenz berücksichtigt.
 
-Nach der Verdichtung wird die Referenzdatenbank in eine veröffentlichbare Nachrichtenstruktur überführt und auf dem Topic \texttt{/ibvs/reference/keypoints} publiziert. Gleichzeitig wird über \texttt{/ibvs/init\_done} signalisiert, dass die Initialisierung erfolgreich abgeschlossen wurde. Beide Publisher verwenden eine transiente, latched-artige \ac{QoS}-Konfiguration, sodass neu startende Nodes den aktuellen Referenzzustand auch dann noch erhalten, wenn die Referenz bereits zuvor aufgebaut wurde. Diese Eigenschaft ist für den modularen Systemstart besonders wichtig, da Tracking, Filterung und Regelung nicht zwingend gleichzeitig mit der Initialisierung gestartet werden müssen. 
+Der laufzeitseitige Abgleichskontext ergänzt somit die feste Referenzdatenbank. Während die Referenzdatenbank die langfristig gültige Sollstruktur bereitstellt, verbessert der Laufzeitkontext die Robustheit der Wiederzuordnung im Regelbetrieb.
 
-Zusätzlich unterstützt die Implementierung das Speichern der Referenz in Form eines Overlays sowie optional als \texttt{npz}-Datei. Im Overlay werden die final ausgewählten Referenzpunkte in das zuletzt verfügbare Kamerabild eingezeichnet. Dies erleichtert die manuelle Überprüfung der erzeugten Datenbank. Durch die optionale Persistierung kann die Referenzbasis zudem für Analyse- oder Debugging-Zwecke außerhalb des Live-Betriebs verwendet werden. 
+\subsection{Zusammenfassung}
+\label{subsec:zusammenfassung_keypoint_datenbank}
 
-\section{Bedeutung der Referenzdatenbank für das Matching}
-\label{sec:bedeutung_referenzdatenbank_matching}
-
-Die Referenzdatenbank ist die zentrale Eingangsgröße für den nachfolgenden Descriptor Matcher. Beim Empfang einer Referenznachricht werden deren Bildpositionen und Deskriptoren in normierter Form zwischengespeichert. Erst dadurch kann für jedes neu detektierte aktuelle Merkmal geprüft werden, welchem Referenzmerkmal es am ehesten entspricht. Die Datenbank liefert somit die feste Zielstruktur, gegen die alle aktuellen Beobachtungen verglichen werden. Ohne diese Referenzbasis wäre weder ein konsistenter globaler Deskriptorvergleich noch ein stabiler Bezug zwischen aktuellem Bild und gewünschter Sollansicht möglich. 
-
-Darüber hinaus beeinflusst die Qualität der Datenbank direkt die Qualität des gesamten Systems. Eine Referenzdatenbank mit instabilen, selten beobachteten oder deskriptiv uneindeutigen Merkmalen würde zu schwachen Matchings und damit zu einer instabilen Regelung führen. Die in der Initialisierung verwendeten Mechanismen zur Häufigkeitsbewertung, räumlichen Konsistenzprüfung und Deskriptorverdichtung sind daher nicht nur eine Vorverarbeitung, sondern ein wesentlicher Bestandteil der Gesamtmethode. 
-
-\newpage
-\section{Einordnung in das Gesamtsystem}
-\label{sec:einordnung_keypoint_datenbank_gesamtsystem}
-
-Im Gesamtsystem steht die Keypoint-Datenbank zwischen Wahrnehmung und Merkmalsabgleich. Sie wird aus den von der Keypoint-Erkennung gelieferten Beobachtungen aufgebaut und bildet anschließend die feste Referenz für alle späteren Matching- und Regelungsschritte. Der Session Manager berücksichtigt diese Rolle explizit, indem er zunächst den Core-Betrieb mit Keypoint-Erkennung und Referenzverwaltung startet, anschließend die Initialisierung ausführt und erst nach erfolgreichem \texttt{init\_done}-Signal das eigentliche Tracking freigibt. Damit ist die Referenzdatenbank nicht nur ein passiver Speicher, sondern ein zentraler Zustand des Systems, von dem der gesamte weitere Ablauf abhängt. 
-
-Gerade in der vorliegenden Arbeit ist diese Rolle besonders wichtig, weil die Referenzdatenbank die Brücke zwischen real beobachteten und später modellgestützt beziehungsweise gefiltert verfolgten Merkmalen bildet. Sie definiert, welche Bildpunkte als relevant betrachtet werden, wie sie deskriptiv charakterisiert sind und an welchen Sollpositionen sie sich befinden. Damit liefert sie die strukturelle Basis für die nachfolgenden Kapitel zu modellbasierter Vorhersage, Filterung und Regelung. 
-
-\section{Zusammenfassung}
-\label{sec:zusammenfassung_keypoint_datenbank}
-
-Zusammenfassend wird die Keypoint-Datenbank in dieser Arbeit als lokale Referenzdatenbasis umgesetzt, die während einer Initialisierungsphase aus wiederholt beobachteten Bildmerkmalen aufgebaut wird. Ihre Einträge enthalten die Bildpositionen der Referenzpunkte, die zugehörigen Deskriptoren sowie Bewertungsgrößen wie Auftretenshäufigkeit und akkumulierte Scores. Die Zuordnung neuer Beobachtungen erfolgt über räumliche Nähe und Cosinus-Ähnlichkeit, während die spätere Referenzmenge durch Verdichtung auf die stabilsten Kandidaten beschränkt wird. Auf dieser Grundlage entsteht eine robuste Referenzrepräsentation, die dem Matching, der modellbasierten Vorhersage und letztlich auch der Regelung des Roboters als konsistente Bezugsbasis dient. 
+Die Keypoint-Verwaltung des Systems setzt sich somit aus zwei funktional unterschiedlichen Ebenen zusammen. Die Referenzdatenbank wird einmalig aus stabilen Beobachtungen der Initialisierungsphase aufgebaut und dient anschließend als feste Vergleichsbasis. Der laufzeitseitige Abgleichskontext wird fortlaufend aus aktuellen und bereits gefilterten Zuordnungen abgeleitet und unterstützt das Wiederauffinden von Merkmalen unter erschwerten Sichtbedingungen. Durch diese Aufteilung wird eine robuste und konsistente Merkmalzuordnung für die visuelle Regelung ermöglicht.
 %% End of File %%

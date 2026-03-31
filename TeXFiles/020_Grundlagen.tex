@@ -86,7 +86,6 @@ wobei $\mathbf{s}$ die aktuellen und $\mathbf{s}^{*}$ die gewünschten Bildmerkm
 \mathbf{v}_c = -\lambda \, \mathbf{L}_s^{+} \, (\mathbf{s} - \mathbf{s}^{*}),
 \end{equation}
 wobei $\lambda > 0$ die Regelverstärkung und $\mathbf{L}_s^{+}$ die Pseudoinverse der Interaction Matrix bezeichnet.
-\todo{Berechnung der Pseudoinversen hinzufügen ?}
 
 Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, sodass die aktuellen Bildmerkmale gegen ihre gewünschte Referenzlage konvergieren. Die Interaction Matrix bildet dabei die mathematische Grundlage, um aus einem Fehler im Bildraum eine geeignete Kamerabewegung abzuleiten. \cite{chaumette2006visual}
 \section{Keypoint Detection und Feature Matching}
@@ -114,25 +113,6 @@ Neben klassischen Verfahren existieren auch neuere Ansätze auf Basis neuronaler
 Beim Feature Matching werden Deskriptoren miteinander verglichen, um zu bestimmen, welche Features in zwei Bildern zueinander gehören. Eine häufig verwendete Ähnlichkeitsmetrik ist die Cosinus-Ähnlichkeit oder die euklidische Distanz zwischen den Deskriptorvektoren. \cite{szeliski2022computer}
 
 Eine zuverlässige Feature-Erkennung ist eine zentrale Voraussetzung für stabile Visual-Servoing-Systeme.
-
-
-\section{Probleme bei Reflexion und Okklusion}
-\label{sec:ProblemebeiReflexionundOkklusion}
-In realen Anwendungen können verschiedene Effekte die Erkennung von Bildmerkmalen erschweren. Besonders problematisch sind reflektierende Oberflächen, da diese zu starken Helligkeitsunterschieden im Bild führen können.
-
-Reflexionen können dazu führen, dass:
-\begin{listNorm}
-	\item Bildbereiche überbelichtet erscheinen
-	\item lokale Bildstrukturen verschwinden
-	\item neue, nicht stabile Keypoints entstehen
-\end{listNorm}
-
-Ein weiteres Problem stellt die Okklusion dar. Dabei werden Teile des Objekts temporär verdeckt, beispielsweise durch Werkzeuge, Greifer oder andere Objekte in der Szene.
-
-In beiden Fällen kann es passieren, dass zuvor erkannte Keypoints im Bild nicht mehr gefunden werden. Für \ac{IBVS}-Systeme ist dies problematisch, da die Berechnung des Bildfehlers direkt von der Verfügbarkeit dieser Features abhängt.
-
-Daher werden in vielen modernen Visual-Servoing-Systemen zusätzliche Strategien eingesetzt, um den Verlust von Features zu kompensieren. Dazu gehören beispielsweise modellbasierte Vorhersagen oder Filtermethoden zur Stabilisierung der Featurepositionen.
-\todo{abschnitt notwendig ?}
 
 \section{Zustandsmodelle für visuelle Features}
 \label{sec:ZustandsmodellefürvisuelleFeatures}
