@@ -126,9 +126,9 @@ Basierend auf der Abgrenzung werden 7 System-Konfigurationen definiert. Die in T
         $C_2$ & \ac{EKF} & Zustandsschätzung mittels lokaler Linearisierung \\
         $C_3$ & \ac{UKF} & Filterung mittels Unscented Transform \\
         $C_4$ & \ac{ESKF} & Fehlerzustands-Filterung für Orientierungen \\
-        $C_5$ & \ac{EKF} + \ac{LR} & Kombination aus \ac{EKF} und Local-Rescue-Logik \\
-        $C_6$ & \ac{UKF} + \ac{LR} & Kombination aus \ac{UKF} und Local-Rescue-Logik \\
-        $C_7$ & \ac{ESKF} + \ac{LR} & Kombination aus \ac{ESKF} und Local-Rescue-Logik \\ \bottomrule
+        $C_5$ & \ac{EKF} + \ac{LR} & Kombination aus \ac{EKF} und Local-Rescue-Logik (zu Vergleich) \\
+        $C_6$ & \ac{UKF} + \ac{LR} & Kombination aus \ac{UKF} und Local-Rescue-Logik (zu Vergleich) \\
+        $C_7$ & \ac{ESKF} + \ac{LR} & Kombination aus \ac{ESKF} und Local-Rescue-Logik (zu Vergleich) \\ \bottomrule
     \end{tabular}
 \end{table}
 
@@ -217,21 +217,24 @@ Hinsichtlich des Versuchsablaufs wird sowohl für die 51 Kombinationen in Level 
     \item \textbf{Praxisnähe:} Das Vorgehen bildet einen typischen industriellen Prozess ab, bei dem ein System einmalig für eine Aufgabe initialisiert wird, um anschließend eine Serie von Arbeitszyklen unter schwankenden Umgebungsbedingungen stabil auszuführen.
 \end{enumerate}
 
+Ergänzend zu den systematischen Benchmarkreihen in Level a und Level b wurde eine zusätzliche Detailanalyse auf Basis von Einzelrun-Daten durchgeführt. Diese Analyse diente der isolierten Untersuchung des Einflusses der Local-Rescue-Logik unter gezielt eingebrachten Lichtwechseln. Zu diesem Zweck wurde bewusst eine rein translatorische Bewegung ohne zusätzliche Rotationsanteile gewählt, um den Einflussfaktor zu isolieren.
+
 
 \section{Evaluierungsmetriken}
 \label{subsec:evaluierungsmetriken}
 Die Bewertung erfolgt anhand dreier Hauptkriterien:
 \begin{enumerate}
-    \item \textbf{Regelungsgenauigkeit (\ac{IBVS}-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten:
+    \item \textbf{Regelungsgenauigkeit (\ac{IBVS}-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten. Der RMS-Fehler wird berechnet als:
     \begin{equation}
         E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
     \end{equation}
+    Die Auswertung fokussiert auf den Fehlerverlauf über der Zeit sowie das Konvergenzverhalten, um die Stabilisierung der Regelung zu beurteilen.
 
     \newpage
     \item \textbf{Steuerungsgüte (Robot Effort):} 
     Diese Metrik bewertet die Stabilität und \enquote{Glattheit} der berechneten Stellgrößen. Um den mechanischen Bias des Roboters (wie interne Filterung oder Trägheit) zu eliminieren, wird direkt der Output des \ac{IBVS}-Controllers — ein 6D-Twist-Vektor bestehend aus translatorischen ($\dot{x}, \dot{y}, \dot{z}$) und rotatorischen Geschwindigkeiten ($\dot{\alpha}, \dot{\beta}, \dot{\gamma}$) — als Messgröße herangezogen.
 
-    Zur Auswertung werden die translatorischen und rotatorischen Komponenten getrennt betrachtet und mittels der Euklidischen Norm ($L_2$-Norm) zu einem richtungsunabhängigen Betrag zusammengefasst:
+    Die translatorischen und rotatorischen Komponenten werden getrennt betrachtet und mittels der Euklidischen Norm ($L_2$-Norm) zu richtungsunabhängigen Beträgen zusammengefasst:
     \begin{equation}
         \left|v\right|_{trans} = \sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2} \quad \left[m/s\right] \quad \text{und}
     \end{equation}
@@ -239,19 +242,13 @@ Die Bewertung erfolgt anhand dreier Hauptkriterien:
         \left|\omega\right|_{rot} = \sqrt{\dot{\alpha}^2 + \dot{\beta}^2 + \dot{\gamma}^2} \quad \left[rad/s\right]
     \end{equation}
 
-    Die Analyse dieser Zeitreihen erfolgt über zwei spezifische Kennzahlen:
-    \begin{itemize}
-        \item \textbf{Jitter-Index:} Zur Quantifizierung der \enquote{Zittrigkeit} wird die totale Variation des Geschwindigkeitssignals berechnet. Ein hoher kumulierter Jitter weist auf instabile Feature-Daten und daraus resultierende nervöse Reglerreaktionen hin:
-        \begin{equation}
-            Jitter = \sum_{t=1}^{T} \left| \left|v\right|_t - \left|v\right|_{t-1} \right|
-        \end{equation}
-        \item \textbf{Effektive Pfadlänge:} Durch Integration der kommandierten Geschwindigkeiten über die Versuchszeit wird die tatsächlich zurückgelegte Strecke im Kontrollraum ermittelt. Ein effizientes System zeichnet sich durch eine Pfadlänge aus, die nahe an der theoretischen Ideallinie liegt, während ein unruhiges System durch Schwingungen und Umwege eine deutlich erhöhte Pfadlänge aufweist.
-    \end{itemize}
+    Die Analyse betrachtet die zeitlichen Verläufe dieser Geschwindigkeitsgrößen sowie die daraus abgeleiteten Beschleunigungskomponenten, um die Dynamik und Reproduzierbarkeit der Regelung zu untersuchen.
+
+    Ergänzend wird die effektive Pfadlänge durch Integration der kommandierten Geschwindigkeiten über die Versuchszeit bestimmt. Sie dient als Maß für die Effizienz und Direktheit der Bewegung: Ein effizientes System zeichnet sich durch eine Pfadlänge aus, die nahe an der theoretischen Ideallinie liegt, während ein unruhiges System durch Schwingungen und Richtungswechsel eine deutlich erhöhte Pfadlänge aufweist.
+
     \item \textbf{Robustheit:} 
     \begin{listAlph}
         \item \textbf{Success Rate:} Anteil der Durchläufe, bei denen die Zielpose innerhalb des vorgegebenen Timeouts erreicht wird.
-        \item \textbf{Filter-Stabilität:} Anzahl der Filter-Resets aufgrund von Divergenz oder Instabilität.
-        \item \textbf{Local Rescue Effektivität:} Erfolgsrate der Local Rescue Maßnahmen bei Stufe 3, gemessen an der Wiederherstellung eines stabilen Tracking-Zustands nach einer Okklusion oder einem Lichtwechsel.
     \end{listAlph}
 \end{enumerate}
 

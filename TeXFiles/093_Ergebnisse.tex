@@ -1,101 +1,306 @@
 \chapter{Ergebnisse}
 \label{ch:ergebnisse}
 
-\section{Ergebnisauswertung nach Szenarien}
+\section{Datenbasierte Reduktion des Versuchsraums}
 
-\subsection{Szene 1: Standardbedingungen}
-Unter idealen Umgebungsbedingungen zeigt sich ein Vorteil der gefilterten Systeme hinsichtlich der Konvergenzgeschwindigkeit. 
-\begin{itemize}
-    \item \textbf{Konvergenz (siehe Abbildung~\ref{fig:a_1_timeseries_median_ibvs_rms_px}):} Der Einsatz von Filtern (unabhängig von \ac{LR}) führt zu einer schnelleren Zielerreichung (ca. 2~Sekunden schneller als Stage~1).
-    \item \textbf{Laufruhe (siehe Abbildung~\ref{fig:a_1_mean_ibvs_lin_acc}):} Das rein Keypoint-basierte System (Stage~1) generiert größere Schwankungen in der Beschleunigung. Auffällig ist zudem, dass die Zuschaltung der \ac{LR} Methode bei den gefilterten Ansätzen (insbesondere bei Bauteil~2) zu einer Zunahme der Oszillationen führt.
-    \item \textbf{Pfadlänge (siehe Abbildung~\ref{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2_path_length}):} Ohne Filter ist die Pfadlänge zwar tendenziell kürzer, geht jedoch mit einer inkonstanteren Trajektorienführung einher. Insbesondere der \ac{ESKF} zeigt hier vereinzelt stärkere Schwankungen.
-\end{itemize}
+\subsection{Filterauswahl auf Basis von Level a}
+
+Die Auswahl des für die Folgeexperimente verwendeten Filters erfolgt auf Basis der Level-a-Ergebnisse unter Okklusion. Abbildung~\ref{fig:a_2_typ2_filterauswahl} zeigt für Bauteil Typ~2 den zeitlichen Verlauf der medianen translatorischen Geschwindigkeit sowie des medianen \ac{IBVS}-Fehlers im Bildraum. Ziel dieser Auswertung ist es, diejenigen Filterkonfigurationen zu identifizieren, welche den Regelkreis unter temporärem Featureverlust robust stabilisieren.
+
+In Abbildung~\ref{fig:a_2_Typ2_timeseries_median_ibvs_lin_vel_l2} ist die mediane translatorische Geschwindigkeit über der Zeit dargestellt. Die Baseline ohne Filter fällt bereits sehr früh auf eine Geschwindigkeit von nahezu null ab und verbleibt dort über den weiteren Verlauf. Dies zeigt, dass das System bei Okklusion ohne modellbasierte Zustandsfortschreibung keine stabile Zielannäherung mehr aufrechterhalten kann. Der \ac{EKF} weist im Vergleich dazu einen deutlich unruhigeren Verlauf mit ausgeprägten Zwischenschwankungen auf. Demgegenüber zeigen \ac{ESKF} und \ac{UKF} einen wesentlich glatteren und nahezu deckungsgleichen Verlauf.
+
+Dieses Bild wird durch Abbildung~\ref{fig:a_2_Typ2_timeseries_median_ibvs_rms_px} bestätigt, in der der mediane \ac{IBVS}-RMS-Fehler dargestellt ist. Die Baseline erreicht die Konvergenzschwelle nicht und verbleibt auf hohem Fehlerniveau. Der \ac{EKF} konvergiert zwar grundsätzlich, zeigt jedoch erneut einen deutlich weniger monotonen Verlauf und erreicht die Konvergenz später als \ac{ESKF} und \ac{UKF}. Die beiden letztgenannten Filter verhalten sich dagegen sehr ähnlich und erreichen die Fehlergrenze deutlich früher. Aus diesen Ergebnissen ergibt sich zunächst, dass für die weiteren Untersuchungen ein nichtlinearer modellbasierter Filter erforderlich ist und der \ac{EKF} den beiden Alternativen \ac{ESKF} und \ac{UKF} unter Okklusion unterlegen ist.
 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_rms_px.pgf}}
-        \caption{Bauteil: Typ 1}
-        \label{fig:a_1_Typ1_timeseries_median_ibvs_rms_px}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_2_Typ2_timeseries_median_ibvs_lin_vel_l2.pgf}}
+        \caption{Mediane translatorische Geschwindigkeit}
+        \label{fig:a_2_Typ2_timeseries_median_ibvs_lin_vel_l2}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_ibvs_rms_px.pgf}}
-        \caption{Bauteil: Typ 2}
-        \label{fig:a_1_Typ2_timeseries_median_ibvs_rms_px}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_2_Typ2_timeseries_median_ibvs_rms_px.pgf}}
+        \caption{Medianer \ac{IBVS}-RMS-Fehler}
+        \label{fig:a_2_Typ2_timeseries_median_ibvs_rms_px}
     \end{subfigure}
-    \caption{Level: a | Szen.: 1 | IBVS RMS-Fehler (Median über 5 Läufe)}
-    \label{fig:a_1_timeseries_median_ibvs_rms_px}
+    \caption{Level: a | Szen.: 2 | Bauteil: Typ 2 | Vergleich der Filterkonfigurationen unter Okklusion}
+    \label{fig:a_2_typ2_filterauswahl}
 \end{figure}
 
+Da sich \ac{ESKF} und \ac{UKF} in den gezeigten Qualitätsmetriken sehr ähnlich verhalten, erfolgt die weitere Reduktion anhand des Implementierungs- und Laufzeitaufwands. Der \ac{UKF} basiert auf der Propagation mehrerer Sigma-Punkte durch das nichtlineare Modell und ist damit in der praktischen Ausführung rechenaufwändiger als \ac{EKF}- bzw. \ac{ESKF}-basierte Ansätze~\cite{julier1997new,wan2000ukf}. Vor dem Hintergrund der sehr ähnlichen Ergebnisqualität wird daher für die weiteren Experimente der \ac{ESKF} als bevorzugter Filter ausgewählt.
+
+Unter Idealbedingungen zeigt sich jedoch zugleich, dass der Einsatz eines Filters nicht in jeder Metrik automatisch zu einem Vorteil führt. Abbildung~\ref{fig:a_1_Typ1_timeseries_median_path_length} zeigt für Bauteil Typ~1 die mediane Pfadlänge über der Zeit. Hier weist die Baseline ohne Filter den geringsten Wert auf. Dies deutet darauf hin, dass bei ungestörter Merkmalsextraktion die direkte Nutzung der ungefilterten Keypoints eine präzisere Feinannäherung erlaubt als eine auf eine reduzierte aktive Punktmenge gestützte Filterrepräsentation. Für die weitere Interpretation ist daher zu berücksichtigen, dass der Vorteil der Filterung insbesondere unter Störeinflüssen sichtbar wird, während die Baseline unter Idealbedingungen weiterhin einen präzisen Referenzfall darstellt.
+
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_mean_ibvs_lin_acc.pgf}}
-        \caption{Bauteil: Typ 1}
-        \label{fig:a_1_Typ1_mean_ibvs_lin_acc}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_mean_ibvs_lin_acc.pgf}}
-        \caption{Bauteil: Typ 2}
-        \label{fig:a_1_Typ2_mean_ibvs_lin_acc}
-    \end{subfigure}
-    \caption{Level: a | Szen.: 1 | mittlere Lineare Beschleunigung}
-    \label{fig:a_1_mean_ibvs_lin_acc}
+    \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_path_length.pgf}}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | Mediane Pfadlänge über der Zeit}
+    \label{fig:a_1_Typ1_timeseries_median_path_length}
 \end{figure}
+
+\subsection{Bauteilauswahl für die Folgeexperimente}
+
+Die Auswahl des Bauteils für die vertiefenden Untersuchungen erfolgt in einem ersten Schritt unter Idealbedingungen. Hierfür wird geprüft, ob Baseline und Filter bereits ohne äußere Störung ein vergleichbares dynamisches Verhalten aufweisen. Nur dann lassen sich spätere Unterschiede unter Okklusion oder Lichtwechsel primär auf die eigentlichen Störeinflüsse und nicht bereits auf einen materialspezifischen Grundbias zurückführen.
+
+Abbildung~\ref{fig:a_1_bauteilauswahl_lin_acc} zeigt für die drei Bauteiltypen unter Szenario~I die mediane translatorische Beschleunigung über der Zeit. Für Typ~1 und Typ~2 liegen die Verläufe der Baseline und der Filterkonfigurationen vergleichsweise nahe beieinander. Beide Bauteile eignen sich daher grundsätzlich als Ausgangspunkt für einen belastbaren Vergleich zwischen ungefilterter und gefilterter Regelung. Für Typ~3 zeigt sich dagegen bereits unter Idealbedingungen eine deutlich stärkere Abweichung zwischen Baseline und Filterverlauf. Insbesondere die Baseline weist hier zu Beginn deutlich höhere Beschleunigungsspitzen und insgesamt ein unruhigeres Verhalten auf. Dies deutet darauf hin, dass bei diesem Bauteil bereits die reine Merkmalsextraktion deutlich instabiler ist und damit ein starker materialspezifischer Bias vorliegt. Typ~3 wurde daher für die weiterführenden Untersuchungen nicht als primäres Vergleichsbauteil verwendet.
 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_path_length.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_lin_acc_l2.pgf}}
         \caption{Bauteil: Typ 1}
-        \label{fig:a_1_Typ1_timeseries_median_path_length}
+        \label{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_path_length.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_ibvs_lin_acc_l2.pgf}}
         \caption{Bauteil: Typ 2}
-        \label{fig:a_1_Typ2_timeseries_median_path_length}
+        \label{fig:a_1_Typ2_timeseries_median_ibvs_lin_acc_l2}
     \end{subfigure}
     \vfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_path_length.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ3_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \caption{Bauteil: Typ 3}
+        \label{fig:a_1_Typ3_timeseries_median_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 1 | Mediane translatorische Beschleunigung zur Bauteilauswahl}
+    \label{fig:a_1_bauteilauswahl_lin_acc}
+\end{figure}
+
+Zwischen Typ~1 und Typ~2 erfolgt die endgültige Auswahl anhand der Robustheit unter Lichtwechsel. Abbildung~\ref{fig:a_3_bauteilauswahl_success_rate} zeigt die Success Rate beider Bauteile in Szenario~III. Für Typ~1 wird unter Lichtwechsel nahezu keine erfolgreiche Konvergenz erreicht. Für Typ~2 zeigen die Stage-2-Konfigurationen dagegen deutlich höhere Erfolgsraten. Insbesondere Stage~2 mit \ac{EKF} und \ac{UKF} erreicht jeweils eine Success Rate von 1{,}0, während Stage~2 mit \ac{ESKF} bei 0{,}8 liegt. Gleichzeitig fällt auf, dass die Stage-3-Konfigurationen mit \ac{LR} in diesem Szenario jeweils nur eine Success Rate von 0{,}2 erreichen und damit keinen zusätzlichen Vorteil gegenüber Stage~2 liefern. Dies deutet bereits an, dass \ac{LR} unter Lichtwechsel nicht automatisch zu einer Verbesserung führt.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_3_Typ1_success_rate.pgf}}
         \caption{Bauteil: Typ 1}
-        \label{fig:a_1_Typ1_path_length}
+        \label{fig:a_3_Typ1_success_rate}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_path_length.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_3_Typ2_success_rate.pgf}}
         \caption{Bauteil: Typ 2}
-        \label{fig:a_1_Typ2_path_length}
+        \label{fig:a_3_Typ2_success_rate}
     \end{subfigure}
-    \caption{Level: a | Szen.: 1 | Pfadlänge}
-    \label{fig:a_1_path_length}
+    \caption{Level: a | Szen.: 3 | Success Rate zur Bauteilauswahl unter Lichtwechsel}
+    \label{fig:a_3_bauteilauswahl_success_rate}
 \end{figure}
 
-\subsection{Szene 2: Okklusion (Sichtverdeckung)}
-Bei partieller Verdeckung der Zielmerkmale wird die absolute Notwendigkeit robuster Zustandsschätzer evident.
-\begin{itemize}
-    \item \textbf{Systemstabilität (\textit{med ibvs rms px}):} Das Stage-1-System (ohne Filter) konvergiert bei Okklusion in keinem der Testläufe erfolgreich. Der Extended Kalman Filter (EKF) weist ebenfalls gravierende Schwächen auf und liefert unzureichende Ergebnisse. 
-    \item \textbf{Einfluss der Local Rescue (LR):} Die LR-Erweiterung führt häufig zu temporären Diskontinuitäten (,,Rucklern``, z.\,B. bei UKF+LR) oder einer generellen Verschlechterung der Systemstabilität.
-    \item \textbf{Beschleunigung \& Pfadlänge:} Der EKF fällt durchgehend durch große Schwankungen auf. Die stabilste Performance (geringste Beschleunigungsoszillation, hohe Konvergenz) liefert konsistent der Unscented Kalman Filter (UKF) in der reinen Ausführung ohne LR.
-\end{itemize}
+Eine zusätzliche Einordnung des Filterverhaltens unter Lichtwechsel liefert Abbildung~\ref{fig:a_3_bauteilauswahl_lin_acc}. Dargestellt ist die mediane translatorische Beschleunigung für Typ~1 und Typ~2 in Szenario~III. In beiden Fällen zeigt die Baseline ohne Filter nach dem Zuschalten der Beleuchtung einen ausgeprägten Peak, während die gefilterten Verläufe deutlich glatter bleiben. Dies unterstreicht den stabilisierenden Effekt der modellbasierten Schätzung auch unter photometrischen Störungen. Gleichzeitig ist in diesen aggregierten Verläufen kein klarer und konsistenter Vorteil der \ac{LR}-Erweiterung gegenüber dem reinen Filterbetrieb erkennbar. Diese Beobachtung motiviert die im folgenden Abschnitt dargestellte Zusatzanalyse auf Einzelrun-Ebene.
 
-\subsection{Szene 3: Beleuchtungsänderungen}
-Variierende Lichtverhältnisse stellen hohe Anforderungen an die Stabilität der Merkmalsextraktion.
-\begin{itemize}
-    \item \textbf{Glättung \& Robustheit (\textit{med ibvs rms px}):} Die Filter-Ansätze generieren deutlich glattere Fehlerkurven. Das Stage-1-System reagiert auf Lichtein- und -ausschaltungen hochgradig oszillierend (,,zappelig``) und produziert vermehrt Beschleunigungsausreißer.
-    \item \textbf{Konvergenzverhalten:} Die Kombination von Filtern mit der LR-Erweiterung (z.\,B. ESKF+LR, UKF+LR) wirkt sich bei Beleuchtungswechseln negativ aus; reine Filter-Ansätze ohne LR konvergieren hier merklich besser und robuster. Beide Systemauslegungen (mit und ohne Filter) benötigen insgesamt länger für die Konvergenz als unter Standardbedingungen.
-\end{itemize}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_3_Typ1_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \caption{Bauteil: Typ 1}
+        \label{fig:a_3_Typ1_timeseries_median_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_3_Typ2_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \caption{Bauteil: Typ 2}
+        \label{fig:a_3_Typ2_timeseries_median_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 3 | Mediane translatorische Beschleunigung unter Lichtwechsel}
+    \label{fig:a_3_bauteilauswahl_lin_acc}
+\end{figure}
 
-\section{Schlussfolgerungen}
-Aus der Synthese der Benchmark-Ergebnisse lassen sich folgende systemtechnische Schlüsse ziehen:
+Auf Basis dieser Ergebnisse wird Typ~2 als zentrales Bauteil für die weiteren Experimente ausgewählt. Das Bauteil besitzt einerseits ausreichend Textur für stabile Merkmalsextraktion, weist andererseits jedoch spiegelnde Eigenschaften auf und bildet damit einen praxisnahen und zugleich anspruchsvollen Versuchsfall. Die weiteren Untersuchungen in Level~b sowie in der ergänzenden \ac{LR}-Analyse werden daher auf Basis dieses Bauteils durchgeführt.
 
-\begin{enumerate}
-    \item \textbf{Notwendigkeit der Filterung:} Ein rein Keypoint-basiertes IBVS (Stage~1) ist für den robusten Einsatz ungeeignet. Während es unter Idealbedingungen (Szene~1) funktioniert, versagt es bei Okklusion vollständig und weist bei Beleuchtungsänderungen eine unzureichende Laufruhe auf.
-    \item \textbf{Performance der Filter-Algorithmen:} Der Unscented Kalman Filter (\textbf{UKF}) erweist sich über alle Szenarien hinweg als die stabilste und robusteste Lösung (geringste Beschleunigungsschwankungen, höchste Toleranz gegenüber Okklusion). Der EKF fällt in seiner Performance deutlich ab und neigt zu Instabilitäten. Der ESKF positioniert sich als solide Alternative, zeigt jedoch leichte Schwächen in der Trajektorienkonstanz.
-    \item \textbf{Kritische Bewertung der Local Rescue (LR) Methode:} Die Zuschaltung der LR-Erweiterung wirkt sich im aktuellen Setup überwiegend negativ aus. Sie induziert zusätzliche Ruckler bei Okklusion, erhöht die Beschleunigungsschwankungen und verschlechtert die Konvergenz bei Lichtänderungen. Auf die Nutzung von LR sollte auf Basis dieser Daten verzichtet werden.
-\end{enumerate}
+\section{Zusatzanalyse des Local Rescue unter translatorischer Bewegung}
+\label{sec:lr_zusatzanalyse}
 
-\textbf{Fazit:} Für ein robustes und effizientes IBVS-System wird die Implementierung eines \textbf{UKF (ohne LR-Erweiterung)} empfohlen, da dieses Setup den besten Kompromiss aus Konvergenzgeschwindigkeit, Systemstabilität bei Störgrößen und mechanischer Laufruhe bietet.
+Diese Detailanalyse der Local-Rescue-Mechanik wurde auf Grundlage von Einzelrundaten durchgeführt. Während die Level-a- und Level-b-Auswertungen primär aggregierte Metriken (Mittelwerte, Mediane) herangezogen haben, erfolgt hier eine laufspezifische Betrachtung. Dazu wurde eine rein translatorische Bewegung zwischen Start- und Zielpose gewählt. Während der Fahrt wurde nach 2\,s für 1\,s eine zusätzliche Beleuchtung eingeschaltet, anschließend für 1\,s wieder ausgeschaltet und nach einer weiteren Sekunde erneut für 1\,s eingeschaltet. Auf diese Weise konnten gezielt kurzzeitige photometrische Störungen eingebracht werden, ohne zugleich weitere Freiheitsgrade als Störgröße zu überlagern.
+
+Im Gegensatz zu den zuvor betrachteten Median- und Vergleichsdarstellungen werden in diesem Abschnitt bewusst Einzelruns ausgewertet. Dadurch bleiben run-spezifische Ausreißer und temporäre Störungen sichtbar, die in aggregierten Darstellungen nur abgeschwächt oder gar nicht mehr erkennbar wären.
+
+\subsection{Vergleich von Stage 1, Stage 2 und Stage 3 in der Stellgröße}
+
+Abbildung~\ref{fig:c_4_typ2_vel_acc_runs} zeigt für die drei Stufen die Verläufe der translatorischen Geschwindigkeit und der translatorischen Beschleunigung in allen fünf Einzelruns. In Stage~1 ohne Filter sind insbesondere zu Beginn der Bewegung sowie im Bereich der Beleuchtungswechsel deutliche run-spezifische Ausschläge sichtbar. Dies betrifft sowohl die Geschwindigkeit als auch die Beschleunigung und weist auf eine erhöhte Empfindlichkeit gegenüber kurzzeitigen Störungen in der Merkmalsextraktion hin.
+
+In Stage~2 mit \ac{ESKF} zeigt sich demgegenüber eine deutlich gleichmäßigere Dynamik. Die fünf Einzelruns verlaufen in der translatorischen Geschwindigkeit nahezu deckungsgleich und auch die Beschleunigung bleibt über den gesamten Verlauf auf einem wesentlich ruhigeren Niveau. Der Filter reduziert damit nicht nur die sichtbaren Ausreißer, sondern erhöht zugleich die Reproduzierbarkeit zwischen den einzelnen Durchläufen.
+
+Für Stage~3 mit \ac{ESKF}+\ac{LR} ergibt sich kein zusätzlicher Stabilitätsgewinn. Zwar bleibt das System grundsätzlich regelbar, jedoch treten sowohl in der Geschwindigkeit als auch in der Beschleunigung erneut stärkere run-spezifische Ausschläge auf. Im Vergleich zu Stage~2 wird damit zusätzliches Rauschen in die Stellgröße eingetragen. Die \ac{LR}-Erweiterung wirkt in diesem Szenario daher nicht stabilisierend, sondern erhöht vielmehr die Variabilität zwischen den Einzelruns.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_lin_vel_l2.pgf}}
+        \caption{Stage 1: LIN VEL L2}
+        \label{fig:c_1_4_Typ2_ibvs_lin_vel_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_lin_vel_l2.pgf}}
+        \caption{Stage 2: LIN VEL L2}
+        \label{fig:c_2_4_ESKF_Typ2_ibvs_lin_vel_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_lin_vel_l2.pgf}}
+        \caption{Stage 3 (ESKF + LR): LIN VEL L2}
+        \label{fig:c_3_4_ESKF_Typ2_ibvs_lin_vel_l2}
+    \end{subfigure}
+
+    \vfill
+
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_lin_acc_l2.pgf}}
+        \caption{Stage 1: LIN ACC L2}
+        \label{fig:c_1_4_Typ2_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_lin_acc_l2.pgf}}
+        \caption{Stage 2: LIN ACC L2}
+        \label{fig:c_2_4_ESKF_Typ2_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_lin_acc_l2.pgf}}
+        \caption{Stage 3 (ESKF + LR): LIN ACC L2}
+        \label{fig:c_3_4_ESKF_Typ2_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \caption{Ergänzende Detailanalyse | Translatorische Bewegung | Lichtwechsel | Bauteil: Typ 2 | Einzelrun-Vergleich der translatorischen Geschwindigkeit und Beschleunigung}
+    \label{fig:c_4_typ2_vel_acc_runs}
+\end{figure}
+
+\subsection{Vergleich des Fehlerverlaufs auf Einzelrun-Ebene}
+
+Abbildung~\ref{fig:c_4_typ2_rms_runs} zeigt ergänzend den \ac{IBVS}-RMS-Fehler aller fünf Einzelruns für Stage~1 bis Stage~3. Auch hier wird der Nutzen des Filters gegenüber der ungefilterten Baseline sichtbar. In Stage~1 sind insbesondere in der frühen Phase der Bewegung stärkere run-spezifische Schwankungen des Fehlers erkennbar. Die fünf Verläufe konvergieren zwar grundsätzlich, zeigen jedoch ein sichtbares Zittern im Bereich der initialen Annäherung.
+
+Stage~2 mit \ac{ESKF} liefert den gleichmäßigsten Fehlerverlauf. Die fünf Kurven liegen nahezu übereinander und fallen über die Zeit sehr ähnlich ab. Dies bestätigt, dass der Filter nicht nur die Stellgröße glättet, sondern auch den eigentlichen Regelungsfehler reproduzierbar stabilisiert. Auffällig ist zudem, dass die Konvergenzzeiten in Stage~2 sehr eng beieinander liegen.
+
+In Stage~3 mit \ac{ESKF}+\ac{LR} steigt die Streuung zwischen den fünf Einzelruns wieder an. Die Verläufe sind weniger deckungsgleich als in Stage~2 und zeigen zusätzliche lokale Abweichungen. Auch wenn einzelne Runs vergleichbare oder sogar etwas frühere Konvergenzzeiten erreichen, ist das Gesamtbild weniger konsistent. Für die vorliegende translatorische Lichtwechselanalyse ergibt sich damit kein belastbarer Zusatznutzen der \ac{LR}-Erweiterung. Vielmehr zeigt sich, dass der \ac{ESKF} ohne \ac{LR} in diesem Szenario die stabilste und reproduzierbarste Lösung darstellt.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_rms_px.pgf}}
+        \caption{Stage 1: RMS PX}
+        \label{fig:c_1_4_Typ2_ibvs_rms_px}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_rms_px.pgf}}
+        \caption{Stage 2: RMS PX}
+        \label{fig:c_2_4_ESKF_Typ2_ibvs_rms_px}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_rms_px.pgf}}
+        \caption{Stage 3 (ESKF + LR): RMS PX}
+        \label{fig:c_3_4_ESKF_Typ2_ibvs_rms_px}
+    \end{subfigure}
+    \caption{Ergänzende Detailanalyse | Translatorische Bewegung | Lichtwechsel | Bauteil: Typ 2 | Einzelrun-Vergleich des \ac{IBVS}-RMS-Fehlers}
+    \label{fig:c_4_typ2_rms_runs}
+\end{figure}
+
+Die Ergebnisse dieser Zusatzanalyse legen nahe, dass zusätzliche Updateschritte nicht automatisch zu einer besseren Schätzung führen. Vielmehr scheint \ac{LR} im vorliegenden Setup zusätzliche, aber nicht hinreichend verlässliche Reassoziationen in den Filter einzubringen. Unter Lichtwechseln können diese lokalen Wiederzuordnungen photometrisch oder geometrisch inkonsistent sein und dadurch verrauschte Innovationsschritte erzeugen. In der Folge wird die ansonsten stabile modellbasierte Vorhersage nicht verbessert, sondern teilweise durch zusätzliche Korrektursprünge gestört.
+
+\section{Rotationserweiterung auf Level b}
+\label{sec:rotation_level_b}
+
+Nach der datenbasierten Auswahl von Filter und Bauteil wird im nächsten Schritt die Erweiterung auf Level~b betrachtet. Ziel dieser Versuchsreihe ist es zu zeigen, dass die Regelung nicht nur für translatorische Bewegungen und eine Rotation um die z-Achse, sondern auch für zusätzliche Rotationen um die x- und y-Achse eingesetzt werden kann. Die hierfür verwendete Tiefeninformation der einzelnen Keypoints beziehungsweise Modellpunkte erlaubt es, die zusätzliche Rotationsdynamik in der Schätzung und Regelung zu berücksichtigen.
+
+\subsection{Referenzverhalten unter Idealbedingungen}
+
+Abbildung~\ref{fig:b_1_typ2_baseline} zeigt für Level~b unter Standardbedingungen den medianen Verlauf der translatorischen sowie der rotatorischen Geschwindigkeit für Bauteil Typ~2. In Abbildung~\ref{fig:b_1_Typ2_timeseries_median_ibvs_ang_vel_l2} ist die mediane rotatorische Geschwindigkeit dargestellt. Hier verlaufen Baseline, Filter und Filter mit \ac{LR} über weite Strecken sehr ähnlich. Dies zeigt, dass die Erweiterung auf zusätzliche Rotationsfreiheitsgrade unter Idealbedingungen grundsätzlich stabil beherrscht wird und die reine Zuschaltung der Rotationsanteile nicht zu einer unmittelbaren Destabilisierung des Systems führt.
+
+In Abbildung~\ref{fig:b_1_Typ2_timeseries_median_ibvs_lin_vel_l2} ist die mediane translatorische Geschwindigkeit dargestellt. Hier zeigt die Baseline ohne Filter im Mittel einen etwas höheren Verlauf als die gefilterten Varianten. Dies ist konsistent mit den bereits in Level~a beobachteten Ergebnissen, wonach die ungefilterte Regelung unter Idealbedingungen in der Feinannäherung teilweise direkter reagiert. Für die Einordnung der folgenden Okklusionsversuche ist daher wichtig, dass sich die Baseline unter ungestörten Bedingungen zunächst unauffällig verhält und die Unterschiede zwischen den Konfigurationen hier noch vergleichsweise gering ausfallen.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_1_Typ2_timeseries_median_ibvs_ang_vel_l2.pgf}}
+        \caption{Mediane rotatorische Geschwindigkeit}
+        \label{fig:b_1_Typ2_timeseries_median_ibvs_ang_vel_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_1_Typ2_timeseries_median_ibvs_lin_vel_l2.pgf}}
+        \caption{Mediane translatorische Geschwindigkeit}
+        \label{fig:b_1_Typ2_timeseries_median_ibvs_lin_vel_l2}
+    \end{subfigure}
+    \caption{Level: b | Szen.: 1 | Bauteil: Typ 2 | Referenzverhalten unter Standardbedingungen}
+    \label{fig:b_1_typ2_baseline}
+\end{figure}
+
+\subsection{Verhalten unter Okklusion}
+
+Die eigentliche Aussagekraft der Level-b-Versuche ergibt sich unter Okklusion. Abbildung~\ref{fig:b_2_typ2_vel_acc} zeigt hierzu für Bauteil Typ~2 den medianen Verlauf der rotatorischen und translatorischen Geschwindigkeits- und Beschleunigungsgrößen.
+
+In Abbildung~\ref{fig:b_2_Typ2_timeseries_median_ibvs_ang_vel_l2} und Abbildung~\ref{fig:b_2_Typ2_timeseries_median_ibvs_ang_acc_l2} sind die rotatorische Geschwindigkeit und Beschleunigung dargestellt. Die Baseline ohne Filter weist hier deutlich stärkere Sprünge und abruptere Änderungen auf. Demgegenüber verlaufen die gefilterten Kurven deutlich glatter. Dies zeigt, dass die modellbasierte Schätzung die zusätzlichen Rotationsanteile auch unter temporärem Merkmalsverlust stabilisiert und die Regelgröße im Winkelraum wirksam beruhigt.
+
+Das gleiche Bild ergibt sich für die translatorischen Größen. In Abbildung~\ref{fig:b_2_Typ2_timeseries_median_ibvs_lin_vel_l2} und Abbildung~\ref{fig:b_2_Typ2_timeseries_median_ibvs_lin_acc_l2} zeigt die Baseline ohne Filter ein deutlich ruckligeres Verhalten mit ausgeprägten Beschleunigungs- und Abbremsphasen. Der \ac{ESKF} führt hingegen zu einem wesentlich gleichmäßigeren Verlauf. Dadurch wird sichtbar, dass der Filter unter Okklusion nicht nur einzelne Ausreißer reduziert, sondern die gesamte Trajektorienführung sowohl im translatorischen als auch im rotatorischen Anteil stabilisiert.
+
+Auch in Level~b zeigt die \ac{LR}-Erweiterung keinen zusätzlichen Vorteil gegenüber dem reinen Filterbetrieb. Die Kurven von Stage~3 (ESKF + LR) bleiben zwar deutlich ruhiger als die Baseline, liegen jedoch meist oberhalb oder nahe bei den entsprechenden Stage-2-Verläufen. Damit bestätigt sich die bereits in den vorherigen Auswertungen beobachtete Tendenz, dass \ac{LR} im vorliegenden Setup keinen konsistenten Zusatznutzen liefert.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_ibvs_ang_acc_l2.pgf}}
+        \caption{Mediane rotatorische Beschleunigung}
+        \label{fig:b_2_Typ2_timeseries_median_ibvs_ang_acc_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_ibvs_ang_vel_l2.pgf}}
+        \caption{Mediane rotatorische Geschwindigkeit}
+        \label{fig:b_2_Typ2_timeseries_median_ibvs_ang_vel_l2}
+    \end{subfigure}
+
+    \vfill
+
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \caption{Mediane translatorische Beschleunigung}
+        \label{fig:b_2_Typ2_timeseries_median_ibvs_lin_acc_l2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_ibvs_lin_vel_l2.pgf}}
+        \caption{Mediane translatorische Geschwindigkeit}
+        \label{fig:b_2_Typ2_timeseries_median_ibvs_lin_vel_l2}
+    \end{subfigure}
+    \caption{Level: b | Szen.: 2 | Bauteil: Typ 2 | Medianer Verlauf der Geschwindigkeits- und Beschleunigungsgrößen unter Okklusion}
+    \label{fig:b_2_typ2_vel_acc}
+\end{figure}
+
+\subsection{Fehlerverlauf und Pfadlänge}
+
+Abbildung~\ref{fig:b_2_typ2_rms_path} fasst die Auswirkungen der Okklusion auf den eigentlichen Regelungsfehler sowie auf die resultierende Pfadlänge zusammen. In Abbildung~\ref{fig:b_2_Typ2_timeseries_median_ibvs_rms_px} ist der mediane \ac{IBVS}-RMS-Fehler dargestellt. Hier zeigt sich ein deutlicher Vorteil des Filters: Während die Baseline die Konvergenzschwelle erst nach 15.43\,s erreicht, liegt die Einschwingzeit bei Stage~2 mit \ac{ESKF} bei 8.11\,s und bei Stage~3 mit \ac{ESKF}+\ac{LR} bei 9.74\,s. Der Filter reduziert damit nicht nur das sichtbare Zittern des Fehlerverlaufs, sondern beschleunigt die Konvergenz unter Okklusion deutlich. Gleichzeitig bestätigt auch diese Metrik, dass die zusätzliche \ac{LR}-Erweiterung keinen Vorteil gegenüber dem reinen \ac{ESKF} liefert.
+
+Abbildung~\ref{fig:b_2_Typ2_timeseries_median_path_length} zeigt ergänzend die mediane Pfadlänge über der Zeit. Hier ist erkennbar, dass die gefilterten Varianten eine kürzere und damit effizientere Trajektorie aufweisen als die Baseline. Die ungefilterte Regelung erzeugt durch die stärkeren Schwankungen und Richtungsänderungen eine längere Pfadlänge, während der \ac{ESKF} eine kompaktere und zielgerichtetere Bewegung ermöglicht. Auch in dieser Metrik zeigt Stage~2 das günstigste Verhalten.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_ibvs_rms_px.pgf}}
+        \caption{Medianer \ac{IBVS}-RMS-Fehler}
+        \label{fig:b_2_Typ2_timeseries_median_ibvs_rms_px}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{b_2_Typ2_timeseries_median_path_length.pgf}}
+        \caption{Mediane Pfadlänge}
+        \label{fig:b_2_Typ2_timeseries_median_path_length}
+    \end{subfigure}
+    \caption{Level: b | Szen.: 2 | Bauteil: Typ 2 | Fehlerverlauf und Pfadlänge unter Okklusion}
+    \label{fig:b_2_typ2_rms_path}
+\end{figure}
+
+\section{Zusammenfassung der Ergebnisse}
+
+Die Ergebnisse zeigen insgesamt, dass die modellbasierte Filterung den entscheidenden Beitrag zur Stabilisierung des \ac{IBVS}-Regelkreises leistet. Bereits in Level~a wurde deutlich, dass der \ac{EKF} unter Okklusion den nichtlinearen Alternativen \ac{ESKF} und \ac{UKF} unterlegen ist, während sich \ac{ESKF} und \ac{UKF} hinsichtlich der betrachteten Metriken sehr ähnlich verhalten. Vor dem Hintergrund des geringeren praktischen Aufwands wurde daher der \ac{ESKF} als bevorzugte Filterlösung für die Folgeexperimente ausgewählt.
+
+Die Bauteilauswahl zeigte zudem, dass Typ~2 den geeignetsten Kompromiss für die weiterführenden Analysen darstellt. Das Bauteil besitzt ausreichend Textur für eine stabile Merkmalsextraktion, weist zugleich jedoch reflektierende Eigenschaften auf und bildet damit einen praxisnahen und zugleich anspruchsvollen Versuchsfall. Typ~3 zeigte dagegen bereits unter Idealbedingungen einen ausgeprägten materialspezifischen Bias und wurde daher nicht als zentrales Vergleichsbauteil für die Vertiefung herangezogen.
+
+Sowohl unter Okklusion als auch unter Lichtwechseln führt der \ac{ESKF} zu glatteren Stellgrößen, einer stabileren Fehlerabnahme und einer insgesamt robusteren Zielannäherung als die ungefilterte Baseline. Dies zeigte sich zunächst in den aggregierten Level-a-Auswertungen und bestätigte sich anschließend in der Zusatzanalyse auf Einzelrun-Ebene. Der Filter reduziert die sichtbaren Ausreißer in Geschwindigkeit, Beschleunigung und Fehlerverlauf deutlich und erhöht zugleich die Reproduzierbarkeit zwischen den Durchläufen.
+
+Für die \ac{LR}-Erweiterung ergab sich dagegen in keinem der betrachteten Teile ein belastbarer Zusatznutzen. Weder unter Lichtwechsel noch unter Okklusion konnte Stage~3 (ESKF + LR) konsistent bessere Ergebnisse als Stage~2 (ESKF) erzielen. Vielmehr zeigten sich häufig stärkere run-spezifische Abweichungen, zusätzliche Ausschläge in den Stellgrößen und eine geringere Konsistenz im Fehlerverlauf. Die Ergebnisse legen daher nahe, dass \ac{LR} im vorliegenden Setup zusätzliche, aber nicht hinreichend verlässliche Reassoziationen in den Filter einbringt. Statt die bereits stabile modellbasierte Vorhersage zu verbessern, können diese Updates photometrisch oder geometrisch inkonsistent sein und dadurch verrauschte Innovationsschritte erzeugen.
+
+Ein konsistentes Gesamtbild ergibt sich schließlich auch in der Erweiterung auf Level~b. Die Ergebnisse zeigen, dass die Regelung auch bei zusätzlicher Rotation um die x- und y-Achse stabil betrieben werden kann. Insbesondere unter Okklusion führte der \ac{ESKF} zu glatteren Geschwindigkeits- und Beschleunigungsverläufen, einer kürzeren Pfadlänge sowie zu einer deutlich schnelleren Konvergenz des \ac{IBVS}-Fehlers als die ungefilterte Baseline. Damit konnte gezeigt werden, dass die modellbasierte Schätzung nicht nur translatorische, sondern auch gekoppelte translatorisch-rotatorische Bewegungen wirksam stabilisiert.
+
+Für das untersuchte System ergibt sich daher insgesamt, dass der reine \ac{ESKF} ohne \ac{LR} den besten Kompromiss aus Robustheit, Laufruhe und Reproduzierbarkeit bietet.
