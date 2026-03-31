@@ -1,9 +1,101 @@
 \chapter{Ergebnisse}
 \label{ch:ergebnisse}
 
-\todo[inline]{Ergebnis-Kapitel muss noch erstell werden.}
+\section{Ergebnisauswertung nach Szenarien}
 
-\section{Stabilität des Regelkreises}
-\label{sec:StabilitätdesRegelkreises}
+\subsection{Szene 1: Standardbedingungen}
+Unter idealen Umgebungsbedingungen zeigt sich ein Vorteil der gefilterten Systeme hinsichtlich der Konvergenzgeschwindigkeit. 
+\begin{itemize}
+    \item \textbf{Konvergenz (siehe Abbildung~\ref{fig:a_1_timeseries_median_ibvs_rms_px}):} Der Einsatz von Filtern (unabhängig von \ac{LR}) führt zu einer schnelleren Zielerreichung (ca. 2~Sekunden schneller als Stage~1).
+    \item \textbf{Laufruhe (siehe Abbildung~\ref{fig:a_1_mean_ibvs_lin_acc}):} Das rein Keypoint-basierte System (Stage~1) generiert größere Schwankungen in der Beschleunigung. Auffällig ist zudem, dass die Zuschaltung der \ac{LR} Methode bei den gefilterten Ansätzen (insbesondere bei Bauteil~2) zu einer Zunahme der Oszillationen führt.
+    \item \textbf{Pfadlänge (siehe Abbildung~\ref{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2_path_length}):} Ohne Filter ist die Pfadlänge zwar tendenziell kürzer, geht jedoch mit einer inkonstanteren Trajektorienführung einher. Insbesondere der \ac{ESKF} zeigt hier vereinzelt stärkere Schwankungen.
+\end{itemize}
 
-%% End of File %%
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_rms_px.pgf}}
+        \caption{Bauteil: Typ 1}
+        \label{fig:a_1_Typ1_timeseries_median_ibvs_rms_px}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_ibvs_rms_px.pgf}}
+        \caption{Bauteil: Typ 2}
+        \label{fig:a_1_Typ2_timeseries_median_ibvs_rms_px}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 1 | IBVS RMS-Fehler (Median über 5 Läufe)}
+    \label{fig:a_1_timeseries_median_ibvs_rms_px}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_mean_ibvs_lin_acc.pgf}}
+        \caption{Bauteil: Typ 1}
+        \label{fig:a_1_Typ1_mean_ibvs_lin_acc}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_mean_ibvs_lin_acc.pgf}}
+        \caption{Bauteil: Typ 2}
+        \label{fig:a_1_Typ2_mean_ibvs_lin_acc}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 1 | mittlere Lineare Beschleunigung}
+    \label{fig:a_1_mean_ibvs_lin_acc}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_path_length.pgf}}
+        \caption{Bauteil: Typ 1}
+        \label{fig:a_1_Typ1_timeseries_median_path_length}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_path_length.pgf}}
+        \caption{Bauteil: Typ 2}
+        \label{fig:a_1_Typ2_timeseries_median_path_length}
+    \end{subfigure}
+    \vfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_path_length.pgf}}
+        \caption{Bauteil: Typ 1}
+        \label{fig:a_1_Typ1_path_length}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_path_length.pgf}}
+        \caption{Bauteil: Typ 2}
+        \label{fig:a_1_Typ2_path_length}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 1 | Pfadlänge}
+    \label{fig:a_1_path_length}
+\end{figure}
+
+\subsection{Szene 2: Okklusion (Sichtverdeckung)}
+Bei partieller Verdeckung der Zielmerkmale wird die absolute Notwendigkeit robuster Zustandsschätzer evident.
+\begin{itemize}
+    \item \textbf{Systemstabilität (\textit{med ibvs rms px}):} Das Stage-1-System (ohne Filter) konvergiert bei Okklusion in keinem der Testläufe erfolgreich. Der Extended Kalman Filter (EKF) weist ebenfalls gravierende Schwächen auf und liefert unzureichende Ergebnisse. 
+    \item \textbf{Einfluss der Local Rescue (LR):} Die LR-Erweiterung führt häufig zu temporären Diskontinuitäten (,,Rucklern``, z.\,B. bei UKF+LR) oder einer generellen Verschlechterung der Systemstabilität.
+    \item \textbf{Beschleunigung \& Pfadlänge:} Der EKF fällt durchgehend durch große Schwankungen auf. Die stabilste Performance (geringste Beschleunigungsoszillation, hohe Konvergenz) liefert konsistent der Unscented Kalman Filter (UKF) in der reinen Ausführung ohne LR.
+\end{itemize}
+
+\subsection{Szene 3: Beleuchtungsänderungen}
+Variierende Lichtverhältnisse stellen hohe Anforderungen an die Stabilität der Merkmalsextraktion.
+\begin{itemize}
+    \item \textbf{Glättung \& Robustheit (\textit{med ibvs rms px}):} Die Filter-Ansätze generieren deutlich glattere Fehlerkurven. Das Stage-1-System reagiert auf Lichtein- und -ausschaltungen hochgradig oszillierend (,,zappelig``) und produziert vermehrt Beschleunigungsausreißer.
+    \item \textbf{Konvergenzverhalten:} Die Kombination von Filtern mit der LR-Erweiterung (z.\,B. ESKF+LR, UKF+LR) wirkt sich bei Beleuchtungswechseln negativ aus; reine Filter-Ansätze ohne LR konvergieren hier merklich besser und robuster. Beide Systemauslegungen (mit und ohne Filter) benötigen insgesamt länger für die Konvergenz als unter Standardbedingungen.
+\end{itemize}
+
+\section{Schlussfolgerungen}
+Aus der Synthese der Benchmark-Ergebnisse lassen sich folgende systemtechnische Schlüsse ziehen:
+
+\begin{enumerate}
+    \item \textbf{Notwendigkeit der Filterung:} Ein rein Keypoint-basiertes IBVS (Stage~1) ist für den robusten Einsatz ungeeignet. Während es unter Idealbedingungen (Szene~1) funktioniert, versagt es bei Okklusion vollständig und weist bei Beleuchtungsänderungen eine unzureichende Laufruhe auf.
+    \item \textbf{Performance der Filter-Algorithmen:} Der Unscented Kalman Filter (\textbf{UKF}) erweist sich über alle Szenarien hinweg als die stabilste und robusteste Lösung (geringste Beschleunigungsschwankungen, höchste Toleranz gegenüber Okklusion). Der EKF fällt in seiner Performance deutlich ab und neigt zu Instabilitäten. Der ESKF positioniert sich als solide Alternative, zeigt jedoch leichte Schwächen in der Trajektorienkonstanz.
+    \item \textbf{Kritische Bewertung der Local Rescue (LR) Methode:} Die Zuschaltung der LR-Erweiterung wirkt sich im aktuellen Setup überwiegend negativ aus. Sie induziert zusätzliche Ruckler bei Okklusion, erhöht die Beschleunigungsschwankungen und verschlechtert die Konvergenz bei Lichtänderungen. Auf die Nutzung von LR sollte auf Basis dieser Daten verzichtet werden.
+\end{enumerate}
+
+\textbf{Fazit:} Für ein robustes und effizientes IBVS-System wird die Implementierung eines \textbf{UKF (ohne LR-Erweiterung)} empfohlen, da dieses Setup den besten Kompromiss aus Konvergenzgeschwindigkeit, Systemstabilität bei Störgrößen und mechanischer Laufruhe bietet.
