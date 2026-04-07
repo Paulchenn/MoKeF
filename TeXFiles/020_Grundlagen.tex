@@ -14,11 +14,11 @@ Grundsätzlich lassen sich zwei Hauptansätze des Visual Servoing unterscheiden:
 	\item \acl{PBVS}
 	\item \acl{IBVS}
 \end{itemize}
-Beim \ac{PBVS} wird zunächst die vollständige Pose des Objekts im dreidimensionalen Raum geschätzt. Anschließend wird aus dieser Pose eine Roboterbewegung berechnet. \cite{chaumette2006visual}
+Beim \ac{PBVS} wird zunächst die vollständige Pose des Objekts im dreidimensionalen Raum geschätzt. Anschließend wird aus dieser Pose eine Roboterbewegung berechnet~\cite{chaumette2006visual}.
 
-Beim \ac{IBVS} hingegen erfolgt die Regelung direkt im Bildraum. Dabei werden Bildmerkmale wie Punkte, Linien oder Konturen als Referenzgrößen verwendet. Der Roboter wird so gesteuert, dass sich die Position dieser Merkmale im Kamerabild einer gewünschten Zielposition annähert. \cite{chaumette2006visual, corke2017robotics}
+Beim \ac{IBVS} hingegen erfolgt die Regelung direkt im Bildraum. Dabei werden Bildmerkmale wie Punkte, Linien oder Konturen als Referenzgrößen verwendet. Der Roboter wird so gesteuert, dass sich die Position dieser Merkmale im Kamerabild einer gewünschten Zielposition annähert~\cite{chaumette2006visual, corke2017robotics}.
 
-Der Vorteil von \ac{IBVS} besteht darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Dadurch kann das Verfahren oft robuster gegenüber Modellierungsfehlern sein. \cite{chaumette2006visual}
+Der Vorteil von \ac{IBVS} besteht darin, dass keine vollständige dreidimensionale Rekonstruktion der Szene erforderlich ist. Dadurch kann das Verfahren oft robuster gegenüber Modellierungsfehlern sein~\cite{chaumette2006visual}.
 
 Der grundlegende Regelkreis von \ac{IBVS} besteht aus folgenden Schritten:
 \begin{itemize}
@@ -27,12 +27,12 @@ Der grundlegende Regelkreis von \ac{IBVS} besteht aus folgenden Schritten:
 	\item Berechnung des Bildfehlers zwischen aktueller und gewünschter Featureposition
 	\item Berechnung einer Roboterbewegung zur Minimierung dieses Fehlers
 \end{itemize}
-Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Position eines Features im Bild und seiner gewünschten Zielposition definiert. \cite{chaumette2006visual}
+Der Bildfehler wird dabei typischerweise als Differenz zwischen der aktuellen Position eines Features im Bild und seiner gewünschten Zielposition definiert~\cite{chaumette2006visual}.
 
 \section{Interaction Matrix und Image Jacobian}
 \label{sec:InteractionMatrixundImageJacobian}
 
-Ein zentrales Element von \ac{IBVS} ist die sogenannte Interaction Matrix, auch als Image Jacobian bezeichnet. Sie beschreibt den Zusammenhang zwischen der Bewegung der Kamera und der zeitlichen Änderung der Bildmerkmale im Bildraum. \cite{corke2017robotics, chaumette2006visual}
+Ein zentrales Element von \ac{IBVS} ist die sogenannte Interaction Matrix, auch als Image Jacobian bezeichnet. Sie beschreibt den Zusammenhang zwischen der Bewegung der Kamera und der zeitlichen Änderung der Bildmerkmale im Bildraum~\cite{chaumette2006visual, corke2017robotics}.
 
 Allgemein lässt sich dieser Zusammenhang durch
 \begin{equation}
@@ -53,7 +53,7 @@ v_x & v_y & v_z & \omega_x & \omega_y & \omega_z
 \end{bmatrix}^{\top}.
 \end{equation}
 
-Für ein einzelnes Feature mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ ergibt sich die zugehörige Interaction Matrix zu \cite{chaumette2006visual}
+Für ein einzelnes Feature mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ ergibt sich die zugehörige Interaction Matrix zu~\cite{chaumette2006visual}
 \begin{equation}
 \mathbf{L}_p =
 \begin{bmatrix}
@@ -62,7 +62,7 @@ Für ein einzelnes Feature mit normierten Bildkoordinaten $(x,y)$ und Tiefe $Z$ 
 \end{bmatrix}.
 \end{equation}
 
-Diese Matrix beschreibt, wie sich die Bildkoordinaten eines einzelnen Features in Abhängigkeit von der Kamerabewegung verändern. Dabei hängen die translatorischen Anteile direkt von der Tiefe $Z$ ab, während die rotatorischen Anteile von der aktuellen Bildlage des Punktes beeinflusst werden. \cite{chaumette2006visual}
+Diese Matrix beschreibt, wie sich die Bildkoordinaten eines einzelnen Features in Abhängigkeit von der Kamerabewegung verändern. Dabei hängen die translatorischen Anteile direkt von der Tiefe $Z$ ab, während die rotatorischen Anteile von der aktuellen Bildlage des Punktes beeinflusst werden~\cite{chaumette2006visual}.
 
 Werden mehrere Features gleichzeitig betrachtet, so wird für jedes Merkmal eine eigene Interaction Matrix aufgestellt. Die gesamte Interaction Matrix ergibt sich dann aus den Einzelmatrizen:
 \begin{equation}
@@ -75,31 +75,32 @@ Werden mehrere Features gleichzeitig betrachtet, so wird für jedes Merkmal eine
 \end{bmatrix}.
 \end{equation}
 
-Für $n$ Features besitzt die gesamte Interaction Matrix damit die Dimension $2n \times 6$. Da diese Matrix im Allgemeinen nicht quadratisch ist, kann sie in der Regel nicht direkt invertiert werden. Stattdessen wird ihre Pseudoinverse verwendet. Diese ermöglicht es, auch für überbestimmte oder unterbestimmte Gleichungssysteme eine Lösung für die Kamerageschwindigkeit zu berechnen. Im Kontext von \ac{IBVS} wird dabei typischerweise diejenige Geschwindigkeit bestimmt, welche den Bildfehler im Sinne einer Least-Squares-Lösung bestmöglich reduziert. \cite{chaumette2006visual, corke2017robotics}
+Für $n$ Features besitzt die gesamte Interaction Matrix damit die Dimension $2n \times 6$. Da diese Matrix im Allgemeinen nicht quadratisch ist, kann sie in der Regel nicht direkt invertiert werden. Stattdessen wird ihre Pseudoinverse verwendet. Diese ermöglicht es, auch für überbestimmte oder unterbestimmte Gleichungssysteme eine Lösung für die Kamerageschwindigkeit zu berechnen. Im Kontext von \ac{IBVS} wird dabei typischerweise diejenige Geschwindigkeit bestimmt, welche den Bildfehler im Sinne einer Least-Squares-Lösung bestmöglich reduziert~\cite{chaumette2006visual, corke2017robotics}.
 
 Zur Regelung wird der Bildfehler zwischen aktueller und gewünschter Merkmalslage definiert als
 \begin{equation}
 \mathbf{e} = \mathbf{s} - \mathbf{s}^{*},
 \end{equation}
-wobei $\mathbf{s}$ die aktuellen und $\mathbf{s}^{*}$ die gewünschten Bildmerkmale bezeichnet. Ein typischer \ac{IBVS}-Regler ergibt sich dann zu \cite{chaumette2006visual}
+wobei $\mathbf{s}$ die aktuellen und $\mathbf{s}^{*}$ die gewünschten Bildmerkmale bezeichnet. Ein typischer \ac{IBVS}-Regler ergibt sich dann zu~\cite{chaumette2006visual}
 \begin{equation}
 \mathbf{v}_c = -\lambda \, \mathbf{L}_s^{+} \, (\mathbf{s} - \mathbf{s}^{*}),
 \end{equation}
 wobei $\lambda > 0$ die Regelverstärkung und $\mathbf{L}_s^{+}$ die Pseudoinverse der Interaction Matrix bezeichnet.
 
-Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, sodass die aktuellen Bildmerkmale gegen ihre gewünschte Referenzlage konvergieren. Die Interaction Matrix bildet dabei die mathematische Grundlage, um aus einem Fehler im Bildraum eine geeignete Kamerabewegung abzuleiten. \cite{chaumette2006visual}
+Das Ziel des Reglers besteht darin, den Bildfehler schrittweise zu reduzieren, sodass die aktuellen Bildmerkmale gegen ihre gewünschte Referenzlage konvergieren. Die Interaction Matrix bildet dabei die mathematische Grundlage, um aus einem Fehler im Bildraum eine geeignete Kamerabewegung abzuleiten~\cite{chaumette2006visual}.
+
 \section{Keypoint Detection und Feature Matching}
 \label{sec:KeypointDetectionundFeatureMatching}
 Damit ein \ac{IBVS}-System arbeiten kann, müssen zunächst stabile Bildmerkmale im Kamerabild erkannt werden. Diese Merkmale werden häufig als Keypoints oder Features bezeichnet.
 
-Keypoints sind charakteristische Bildpunkte, die sich zuverlässig wiedererkennen lassen. Beispiele hierfür sind: \cite{szeliski2022computer}
+Keypoints sind charakteristische Bildpunkte, die sich zuverlässig wiedererkennen lassen. Beispiele hierfür sind~\cite{szeliski2022computer}:
 \begin{listNorm}
 	\item Ecken
 	\item Kantenübergänge
 	\item markante Texturpunkte
 \end{listNorm}
 
-Moderne Feature-Detektionsverfahren berechnen zusätzlich sogenannte Deskriptoren, die die lokale Bildstruktur um einen Keypoint beschreiben. Diese Deskriptoren ermöglichen es, Features zwischen verschiedenen Bildern wiederzuerkennen. \cite{szeliski2022computer}
+Moderne Feature-Detektionsverfahren berechnen zusätzlich sogenannte Deskriptoren, die die lokale Bildstruktur um einen Keypoint beschreiben. Diese Deskriptoren ermöglichen es, Features zwischen verschiedenen Bildern wiederzuerkennen~\cite{szeliski2022computer}.
 
 Bekannte klassische Feature-Verfahren sind beispielsweise:
 \begin{listNorm}
@@ -108,23 +109,24 @@ Bekannte klassische Feature-Verfahren sind beispielsweise:
 	\item \ac{ORB}
 \end{listNorm}
 
-Neben klassischen Verfahren existieren auch neuere Ansätze auf Basis neuronaler Netze, die häufig robustere Features liefern können. Ein Beispiel hierfür ist der Feature-Detektor xFeat, der speziell für robuste Feature-Erkennung entwickelt wurde \cite{potje2024xfeat}.
+Neben klassischen Verfahren existieren auch neuere Ansätze auf Basis neuronaler Netze, die häufig robustere Features liefern können. Ein Beispiel hierfür ist der Feature-Detektor xFeat, der speziell für robuste Feature-Erkennung entwickelt wurde~\cite{potje2024xfeat}.
 
-Beim Feature Matching werden Deskriptoren miteinander verglichen, um zu bestimmen, welche Features in zwei Bildern zueinander gehören. Eine häufig verwendete Ähnlichkeitsmetrik ist die Cosinus-Ähnlichkeit oder die euklidische Distanz zwischen den Deskriptorvektoren. \cite{szeliski2022computer}
+Beim Feature Matching werden Deskriptoren miteinander verglichen, um zu bestimmen, welche Features in zwei Bildern zueinander gehören. Eine häufig verwendete Ähnlichkeitsmetrik ist die Cosinus-Ähnlichkeit oder die euklidische Distanz zwischen den Deskriptorvektoren~\cite{szeliski2022computer}.
 
 Eine zuverlässige Feature-Erkennung ist eine zentrale Voraussetzung für stabile Visual-Servoing-Systeme.
 
+\newpage
 \section{Zustandsmodelle für visuelle Features}
 \label{sec:ZustandsmodellefürvisuelleFeatures}
 
-Um temporäre Ausfälle von Bildmerkmalen zu kompensieren, können Zustandsmodelle verwendet werden. Ein Zustandsmodell beschreibt die erwartete Entwicklung eines Systems über die Zeit \cite{thrun2005probabilistic}.
+Um temporäre Ausfälle von Bildmerkmalen zu kompensieren, können Zustandsmodelle verwendet werden. Ein Zustandsmodell beschreibt die erwartete Entwicklung eines Systems über die Zeit~\cite{thrun2005probabilistic}.
 
-Im Kontext von Visual Servoing kann ein solches Modell verwendet werden, um die zukünftige Position eines Features im Bild vorherzusagen. Grundlage dafür ist häufig die bekannte Bewegung des Roboters oder der Kamera \cite{chaumette2006visual, chaumette2007visual2}.
+Im Kontext von Visual Servoing kann ein solches Modell verwendet werden, um die zukünftige Position eines Features im Bild vorherzusagen. Grundlage dafür ist häufig die bekannte Bewegung des Roboters oder der Kamera~\cite{chaumette2006visual, chaumette2007visual2}.
 
-Ein einfaches Beispiel ist ein Bewegungsmodell, das davon ausgeht, dass sich ein Feature mit konstanter Geschwindigkeit bewegt. In diesem Fall kann die zukünftige Featureposition aus der aktuellen Position und der geschätzten Geschwindigkeit berechnet werden \cite{welch1995kalman}.
+Ein einfaches Beispiel ist ein Bewegungsmodell, das davon ausgeht, dass sich ein Feature mit konstanter Geschwindigkeit bewegt. In diesem Fall kann die zukünftige Featureposition aus der aktuellen Position und der geschätzten Geschwindigkeit berechnet werden~\cite{welch1995kalman}.
 
-Komplexere Modelle können zusätzlich Informationen über die Roboterkinematik oder geometrische Transformationen zwischen verschiedenen Kamerapositionen berücksichtigen \cite{corke2017robotics}.
+Komplexere Modelle können zusätzlich Informationen über die Roboterkinematik oder geometrische Transformationen zwischen verschiedenen Kamerapositionen berücksichtigen~\cite{corke2017robotics}.
 
-Solche Modelle ermöglichen es, auch dann eine Schätzung der Featureposition zu erhalten, wenn ein Feature im aktuellen Bild nicht direkt erkannt werden kann \cite{thrun2005probabilistic}.
+Solche Modelle ermöglichen es, auch dann eine Schätzung der Featureposition zu erhalten, wenn ein Feature im aktuellen Bild nicht direkt erkannt werden kann~\cite{thrun2005probabilistic}.
 
 %% End of File %%

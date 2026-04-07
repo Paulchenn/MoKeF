@@ -1,7 +1,7 @@
 \section{Keypoint-Datenbank}
 \label{sec:keypoint_datenbank}
 
-Für die robuste Zuordnung von Bildmerkmalen im IBVS-System wird eine zweistufige Keypoint-Verwaltung eingesetzt. Diese besteht aus einer während der Initialisierung aufgebauten Referenzdatenbank sowie einem laufzeitseitigen Abgleichskontext. Während die Referenzdatenbank den festen Sollzustand der relevanten Bildmerkmale beschreibt, unterstützt der Laufzeitkontext die Wiederzuordnung dieser Merkmale im Regelbetrieb.
+Für die robuste Zuordnung von Bildmerkmalen im \ac{IBVS}-System wird eine zweistufige Keypoint-Verwaltung eingesetzt. Diese besteht aus einer während der Initialisierung aufgebauten Referenzdatenbank sowie einem laufzeitseitigen Abgleichskontext. Während die Referenzdatenbank den festen Sollzustand der relevanten Bildmerkmale beschreibt, unterstützt der Laufzeitkontext die Wiederzuordnung dieser Merkmale im Regelbetrieb.
 
 \subsection{Aufbau der Referenzdatenbank}
 \label{subsec:aufbau_referenzdatenbank}
@@ -36,6 +36,7 @@ Dieser Kontext wird dann relevant, wenn das globale Deskriptormatching allein ni
 
 Der laufzeitseitige Abgleichskontext ergänzt somit die feste Referenzdatenbank. Während die Referenzdatenbank die langfristig gültige Sollstruktur bereitstellt, verbessert der Laufzeitkontext die Robustheit der Wiederzuordnung im Regelbetrieb.
 
+\newpage
 \subsection{Zusammenfassung}
 \label{subsec:zusammenfassung_keypoint_datenbank}
 

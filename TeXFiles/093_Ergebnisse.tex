@@ -11,6 +11,10 @@ In Abbildung~\ref{fig:a_2_Typ2_timeseries_median_ibvs_lin_vel_l2} ist die median
 
 Dieses Bild wird durch Abbildung~\ref{fig:a_2_Typ2_timeseries_median_ibvs_rms_px} bestätigt, in der der mediane \ac{IBVS}-RMS-Fehler dargestellt ist. Die Baseline erreicht die Konvergenzschwelle nicht und verbleibt auf hohem Fehlerniveau. Der \ac{EKF} konvergiert zwar grundsätzlich, zeigt jedoch erneut einen deutlich weniger monotonen Verlauf und erreicht die Konvergenz später als \ac{ESKF} und \ac{UKF}. Die beiden letztgenannten Filter verhalten sich dagegen sehr ähnlich und erreichen die Fehlergrenze deutlich früher. Aus diesen Ergebnissen ergibt sich zunächst, dass für die weiteren Untersuchungen ein nichtlinearer modellbasierter Filter erforderlich ist und der \ac{EKF} den beiden Alternativen \ac{ESKF} und \ac{UKF} unter Okklusion unterlegen ist.
 
+Da sich \ac{ESKF} und \ac{UKF} in den gezeigten Qualitätsmetriken sehr ähnlich verhalten, erfolgt die weitere Reduktion anhand des Implementierungs- und Laufzeitaufwands. Der \ac{UKF} basiert auf der Propagation mehrerer Sigma-Punkte durch das nichtlineare Modell und ist damit in der praktischen Ausführung rechenaufwändiger als \ac{EKF}- bzw. \ac{ESKF}-basierte Ansätze~\cite{julier1997new,wan2000ukf}. Vor dem Hintergrund der sehr ähnlichen Ergebnisqualität wird daher für die weiteren Experimente der \ac{ESKF} als bevorzugter Filter ausgewählt.
+
+Unter Idealbedingungen zeigt sich jedoch zugleich, dass der Einsatz eines Filters nicht in jeder Metrik automatisch zu einem Vorteil führt. Abbildung~\ref{fig:a_1_Typ1_timeseries_median_path_length} zeigt für Bauteil Typ~1 die mediane Pfadlänge über der Zeit. Hier weist die Baseline ohne Filter den geringsten Wert auf. Dies deutet darauf hin, dass bei ungestörter Merkmalsextraktion die direkte Nutzung der ungefilterten Keypoints eine präzisere Feinannäherung erlaubt als eine auf eine reduzierte aktive Punktmenge gestützte Filterrepräsentation. Für die weitere Interpretation ist daher zu berücksichtigen, dass der Vorteil der Filterung insbesondere unter Störeinflüssen sichtbar wird, während die Baseline unter Idealbedingungen weiterhin einen präzisen Referenzfall darstellt.
+
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.49\textwidth}
@@ -28,13 +32,9 @@ Dieses Bild wird durch Abbildung~\ref{fig:a_2_Typ2_timeseries_median_ibvs_rms_px
     \label{fig:a_2_typ2_filterauswahl}
 \end{figure}
 
-Da sich \ac{ESKF} und \ac{UKF} in den gezeigten Qualitätsmetriken sehr ähnlich verhalten, erfolgt die weitere Reduktion anhand des Implementierungs- und Laufzeitaufwands. Der \ac{UKF} basiert auf der Propagation mehrerer Sigma-Punkte durch das nichtlineare Modell und ist damit in der praktischen Ausführung rechenaufwändiger als \ac{EKF}- bzw. \ac{ESKF}-basierte Ansätze~\cite{julier1997new,wan2000ukf}. Vor dem Hintergrund der sehr ähnlichen Ergebnisqualität wird daher für die weiteren Experimente der \ac{ESKF} als bevorzugter Filter ausgewählt.
-
-Unter Idealbedingungen zeigt sich jedoch zugleich, dass der Einsatz eines Filters nicht in jeder Metrik automatisch zu einem Vorteil führt. Abbildung~\ref{fig:a_1_Typ1_timeseries_median_path_length} zeigt für Bauteil Typ~1 die mediane Pfadlänge über der Zeit. Hier weist die Baseline ohne Filter den geringsten Wert auf. Dies deutet darauf hin, dass bei ungestörter Merkmalsextraktion die direkte Nutzung der ungefilterten Keypoints eine präzisere Feinannäherung erlaubt als eine auf eine reduzierte aktive Punktmenge gestützte Filterrepräsentation. Für die weitere Interpretation ist daher zu berücksichtigen, dass der Vorteil der Filterung insbesondere unter Störeinflüssen sichtbar wird, während die Baseline unter Idealbedingungen weiterhin einen präzisen Referenzfall darstellt.
-
 \begin{figure}[htbp]
     \centering
-    \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_path_length.pgf}}
+    \resizebox{\VarPicWidthC}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_path_length.pgf}}
     \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | Mediane Pfadlänge über der Zeit}
     \label{fig:a_1_Typ1_timeseries_median_path_length}
 \end{figure}
@@ -48,19 +48,19 @@ Abbildung~\ref{fig:a_1_bauteilauswahl_lin_acc} zeigt für die drei Bauteiltypen 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf2}{a_1_Typ1_timeseries_median_ibvs_lin_acc_l2.pgf}}
         \caption{Bauteil: Typ 1}
         \label{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ2_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf2}{a_1_Typ2_timeseries_median_ibvs_lin_acc_l2.pgf}}
         \caption{Bauteil: Typ 2}
         \label{fig:a_1_Typ2_timeseries_median_ibvs_lin_acc_l2}
     \end{subfigure}
     \vfill
     \begin{subfigure}[b]{0.49\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ3_timeseries_median_ibvs_lin_acc_l2.pgf}}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf2}{a_1_Typ3_timeseries_median_ibvs_lin_acc_l2.pgf}}
         \caption{Bauteil: Typ 3}
         \label{fig:a_1_Typ3_timeseries_median_ibvs_lin_acc_l2}
     \end{subfigure}
@@ -125,39 +125,41 @@ Für Stage~3 mit \ac{ESKF}+\ac{LR} ergibt sich kein zusätzlicher Stabilitätsge
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_lin_vel_l2.pgf}}
         \caption{Stage 1: LIN VEL L2}
         \label{fig:c_1_4_Typ2_ibvs_lin_vel_l2}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_lin_acc_l2.pgf}}
+        \caption{Stage 1: LIN ACC L2}
+        \label{fig:c_1_4_Typ2_ibvs_lin_acc_l2}
+    \end{subfigure}\
+
+    \vfill
+
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_lin_vel_l2.pgf}}
         \caption{Stage 2: LIN VEL L2}
         \label{fig:c_2_4_ESKF_Typ2_ibvs_lin_vel_l2}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_lin_acc_l2.pgf}}
+        \caption{Stage 2: LIN ACC L2}
+        \label{fig:c_2_4_ESKF_Typ2_ibvs_lin_acc_l2}
+    \end{subfigure}\
+
+    \vfill
+
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_lin_vel_l2.pgf}}
         \caption{Stage 3 (ESKF + LR): LIN VEL L2}
         \label{fig:c_3_4_ESKF_Typ2_ibvs_lin_vel_l2}
     \end{subfigure}
-
-    \vfill
-
-    \begin{subfigure}[b]{0.32\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_lin_acc_l2.pgf}}
-        \caption{Stage 1: LIN ACC L2}
-        \label{fig:c_1_4_Typ2_ibvs_lin_acc_l2}
-    \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
-        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_lin_acc_l2.pgf}}
-        \caption{Stage 2: LIN ACC L2}
-        \label{fig:c_2_4_ESKF_Typ2_ibvs_lin_acc_l2}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_lin_acc_l2.pgf}}
         \caption{Stage 3 (ESKF + LR): LIN ACC L2}
         \label{fig:c_3_4_ESKF_Typ2_ibvs_lin_acc_l2}
@@ -176,19 +178,19 @@ In Stage~3 mit \ac{ESKF}+\ac{LR} steigt die Streuung zwischen den fünf Einzelru
 
 \begin{figure}[htbp]
     \centering
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_1_4_-_Typ2_ibvs_rms_px.pgf}}
         \caption{Stage 1: RMS PX}
         \label{fig:c_1_4_Typ2_ibvs_rms_px}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_2_4_ESKF_Typ2_ibvs_rms_px.pgf}}
         \caption{Stage 2: RMS PX}
         \label{fig:c_2_4_ESKF_Typ2_ibvs_rms_px}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \vfill
+    \begin{subfigure}[b]{0.49\textwidth}
         \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{c_3_4_ESKF_Typ2_ibvs_rms_px.pgf}}
         \caption{Stage 3 (ESKF + LR): RMS PX}
         \label{fig:c_3_4_ESKF_Typ2_ibvs_rms_px}

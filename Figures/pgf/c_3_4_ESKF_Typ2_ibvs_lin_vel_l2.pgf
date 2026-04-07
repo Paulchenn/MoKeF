@@ -34,7 +34,7 @@
 \begingroup%
 \makeatletter%
 \begin{pgfpicture}%
-\pgfpathrectangle{\pgfpointorigin}{\pgfqpoint{6.949674in}{4.827461in}}%
+\pgfpathrectangle{\pgfpointorigin}{\pgfqpoint{6.949674in}{4.439757in}}%
 \pgfusepath{use as bounding box, clip}%
 \begin{pgfscope}%
 \pgfsetbuttcap%
@@ -47,8 +47,8 @@
 \pgfsetdash{}{0pt}%
 \pgfpathmoveto{\pgfqpoint{0.000000in}{0.000000in}}%
 \pgfpathlineto{\pgfqpoint{6.949674in}{0.000000in}}%
-\pgfpathlineto{\pgfqpoint{6.949674in}{4.827461in}}%
-\pgfpathlineto{\pgfqpoint{0.000000in}{4.827461in}}%
+\pgfpathlineto{\pgfqpoint{6.949674in}{4.439757in}}%
+\pgfpathlineto{\pgfqpoint{0.000000in}{4.439757in}}%
 \pgfpathlineto{\pgfqpoint{0.000000in}{0.000000in}}%
 \pgfpathclose%
 \pgfusepath{fill}%
@@ -791,18 +791,6 @@
 \pgfpathmoveto{\pgfqpoint{0.649674in}{4.339757in}}%
 \pgfpathlineto{\pgfqpoint{6.849674in}{4.339757in}}%
 \pgfusepath{stroke}%
-\end{pgfscope}%
-\begin{pgfscope}%
-\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
-\pgfsetstrokecolor{textcolor}%
-\pgfsetfillcolor{textcolor}%
-\pgftext[x=1.586846in, y=4.602491in, left, base]{\color{textcolor}{\fontsize{12.000000}{14.400000}\selectfont\catcode`\^=\active\def^{\ifmmode\sp\else\^{}\fi}\catcode`\%=\active\def%{\%}Stufe: 3 | Szen.: 4 | Filter: ESKF | Level: c | Bauteil: Typ 2}}%
-\end{pgfscope}%
-\begin{pgfscope}%
-\definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
-\pgfsetstrokecolor{textcolor}%
-\pgfsetfillcolor{textcolor}%
-\pgftext[x=3.073479in, y=4.423090in, left, base]{\color{textcolor}{\fontsize{12.000000}{14.400000}\selectfont\catcode`\^=\active\def^{\ifmmode\sp\else\^{}\fi}\catcode`\%=\active\def%{\%}IBVS LIN VEL L2}}%
 \end{pgfscope}%
 \begin{pgfscope}%
 \pgfsetbuttcap%

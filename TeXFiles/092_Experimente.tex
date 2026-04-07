@@ -156,7 +156,8 @@ Um die Anzahl der Testkombinationen zu reduzieren, wird bei Bauteil Typ 3 innerh
 
 Dies ergibt insgesamt 51 experimentelle Bedingungen für Level a, die eine systematische Isolierung der Einflussfaktoren Szenario, Materialeigenschaft und Konfiguration ermöglichen.
 
-Die Level-b-Testreihe wurde mit reduziertem Umfang ausschließlich für Bauteil Typ 2 durchgeführt, um die zusätzlichen Rotationsfreiheitsgrade $\alpha$ und $\beta$ des \ac{IBVS}-Controllers zu validieren. Typ 2 bietet durch seine Kombination aus ausgeprägter Texturierung und spiegelnden Oberflächeneigenschaften einen praxisnahen, anspruchsvollen Testfall. Die Evaluierung beschränkt sich auf Szenario I und II sowie die Konfigurationen $C_1$, $C_4$ und $C_7$. Diese Auswahl wird durch die Level-a-Ergebnisse begründet und in Abschnitt~\ref{ch:ergebnisse} detailliert dargelegt.
+\newpage
+Die Level-b-Testreihe wird mit reduziertem Umfang ausschließlich für Bauteil Typ 2 durchgeführt, um die zusätzlichen Rotationsfreiheitsgrade $\alpha$ und $\beta$ des \ac{IBVS}-Controllers zu validieren. Typ 2 bietet durch seine Kombination aus ausgeprägter Texturierung und spiegelnden Oberflächeneigenschaften einen praxisnahen, anspruchsvollen Testfall. Die Evaluierung beschränkt sich auf Szenario I und II sowie die Konfigurationen $C_1$, $C_4$ und $C_7$. Diese Auswahl wird durch die Level-a-Ergebnisse begründet und in Abschnitt~\ref{ch:ergebnisse} detailliert dargelegt.
 
 \begin{table}[H]
     \centering
@@ -196,7 +197,7 @@ Tabelle~\ref{tab:zeitliche_abschaetzung} zeigt die resultierende Zeitplanung fü
 
 Für die ergänzende Level-b-Testreihe mit 6 Kombinationen ergibt sich die in Tabelle~\ref{tab:zeitliche_abschaetzung_level_b} dargestellte zusätzliche Zeitplanung.
 
-\begin{table}[hbpt]
+\begin{table}[H]
     \centering
     \caption{Zeitliche Abschätzung für 6 Kombinationen in Level b.}
     \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
@@ -217,13 +218,13 @@ Hinsichtlich des Versuchsablaufs wird sowohl für die 51 Kombinationen in Level 
     \item \textbf{Praxisnähe:} Das Vorgehen bildet einen typischen industriellen Prozess ab, bei dem ein System einmalig für eine Aufgabe initialisiert wird, um anschließend eine Serie von Arbeitszyklen unter schwankenden Umgebungsbedingungen stabil auszuführen.
 \end{enumerate}
 
-Ergänzend zu den systematischen Benchmarkreihen in Level a und Level b wurde eine zusätzliche Detailanalyse auf Basis von Einzelrun-Daten durchgeführt. Diese Analyse diente der isolierten Untersuchung des Einflusses der Local-Rescue-Logik unter gezielt eingebrachten Lichtwechseln. Zu diesem Zweck wurde bewusst eine rein translatorische Bewegung ohne zusätzliche Rotationsanteile gewählt, um den Einflussfaktor zu isolieren.
+Ergänzend zu den systematischen Benchmarkreihen in Level a und Level b wird eine zusätzliche Detailanalyse auf Basis von Einzelrun-Daten durchgeführt. Diese Analyse diente der isolierten Untersuchung des Einflusses der Local-Rescue-Logik unter gezielt eingebrachten Lichtwechseln. Zu diesem Zweck wird bewusst eine rein translatorische Bewegung ohne zusätzliche Rotationsanteile gewählt, um den Einflussfaktor zu isolieren.
 
 
 \section{Evaluierungsmetriken}
 \label{subsec:evaluierungsmetriken}
-Die Bewertung erfolgt anhand dreier Hauptkriterien:
-\begin{enumerate}
+Die Bewertung der Leistungsfähigkeit der verschiedenen Filter- und Entscheidungslogik-Konfigurationen erfolgt unter anderem anhand folgender Metriken, die sowohl die Regelungsgenauigkeit als auch die Steuerungsgüte des \ac{IBVS}-Systems quantifizieren.
+\begin{listNorm}
     \item \textbf{Regelungsgenauigkeit (\ac{IBVS}-Error):} Quantifizierung des quadratischen Fehlers im Bildraum, um die Präzision der Zielverfolgung zu bewerten. Der RMS-Fehler wird berechnet als:
     \begin{equation}
         E_{rms} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (s_i^* - s_i)^2}
@@ -245,11 +246,6 @@ Die Bewertung erfolgt anhand dreier Hauptkriterien:
     Die Analyse betrachtet die zeitlichen Verläufe dieser Geschwindigkeitsgrößen sowie die daraus abgeleiteten Beschleunigungskomponenten, um die Dynamik und Reproduzierbarkeit der Regelung zu untersuchen.
 
     Ergänzend wird die effektive Pfadlänge durch Integration der kommandierten Geschwindigkeiten über die Versuchszeit bestimmt. Sie dient als Maß für die Effizienz und Direktheit der Bewegung: Ein effizientes System zeichnet sich durch eine Pfadlänge aus, die nahe an der theoretischen Ideallinie liegt, während ein unruhiges System durch Schwingungen und Richtungswechsel eine deutlich erhöhte Pfadlänge aufweist.
-
-    \item \textbf{Robustheit:} 
-    \begin{listAlph}
-        \item \textbf{Success Rate:} Anteil der Durchläufe, bei denen die Zielpose innerhalb des vorgegebenen Timeouts erreicht wird.
-    \end{listAlph}
-\end{enumerate}
+\end{listNorm}
 
 %% End of File %%

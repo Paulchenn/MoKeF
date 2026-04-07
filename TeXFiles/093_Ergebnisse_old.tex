@@ -1,0 +1,125 @@
+\chapter{Ergebnisse}
+\label{ch:ergebnisse}
+
+\todo[inline]{Ergebnis-Kapitel muss noch erstell werden.}
+
+\section{}\todo{Titel fehlt}
+
+\subsection{Evaluation des Local-Rescue-Mechanismus}
+\label{sec:ergebnisse_local_rescue}
+
+Die experimentellen Ergebnisse unterstreichen die kritische Bedeutung des Local-Rescue-Mechanismus für die Gesamtstabilität des Systems. Selbst unter idealen Referenzbedingungen (Bauteil Typ 1, Szenario 1) erweist sich das rein kamerabasierte Tracking als fehleranfällig. Die Auswertung zeigt, dass der Local Rescue in diesem Referenzszenario zwischen 1100 und 1400 Mal erfolgreich eingreift (siehe Abbildung~\ref{fig:a_1_Typ1_local_rescue_success}). Dies belegt, dass der globale Feature-Matcher (xFeat) auch bei optimalen Bedingungen -- beispielsweise durch minimalen Motion Blur, Sensorrauschen oder leichte perspektivische Veränderungen -- kontinuierlich Keypoints verliert. 
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\VarPicWidthC}{!}{\import{Figures/pgf}{a_1_Typ1_local_rescue_success.pgf}}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | Local Rescue Success}
+    \label{fig:a_1_Typ1_local_rescue_success}
+\end{figure}
+
+Aus diesen Beobachtungen lässt sich schließen, dass der Local Rescue nicht lediglich als Rückfallsystem für Extrembedingungen fungiert, sondern ein essenzieller, kontinuierlicher Stabilisator im Hintergrund ist. In Kombination mit dem Gating, welches zuverlässig Fehlzuordnungen (durchschnittlich 16 bis 27 Rejects, siehe Abbildung~\ref{fig:a_1_Typ1_filter_reject_count}) herausfiltert, ermöglicht der modellbasierte Local Rescue eine robuste Rückgewinnung valider Merkmalspunkte. Dies stellt einen signifikanten Vorteil der gewählten Systemarchitektur dar.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\VarPicWidthC}{!}{\import{Figures/pgf}{a_1_Typ1_filter_reject_count.pgf}}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | Filter Reject Count}
+    \label{fig:a_1_Typ1_filter_reject_count}
+\end{figure}
+
+\subsection{Einfluss der Zustandsschätzung auf die Einschwingzeit}
+\label{sec:ergebnisse_settling_time}
+
+Entgegen der anfänglichen Annahme, dass die Integration von Filtern systembedingte Latenzen (Lag) erhöht und die Regelung verlangsamt, zeigt die Auswertung einen signifikanten Geschwindigkeitszuwachs. Während das ungefilterte Baseline-System (Stage 1) eine Einschwingzeit von 14,23~s benötigt, um den 20-Pixel-Zielkorridor zu erreichen, unterschreiten die gefilterten Systeme (\ac{EKF}, \ac{ESKF}, UKF) diese Grenze bereits nach 12,19~s. Dies entspricht einem Zeitgewinn von rund zwei Sekunden (siehe Abbildung~\ref{fig:a_1_Typ1_timeseries_median_ibvs_rms_px}). 
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\VarPicWidthC}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_rms_px.pgf}}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | IBVS RMS-Fehler (Median über 5 Läufe)}
+    \label{fig:a_1_Typ1_timeseries_median_ibvs_rms_px}
+\end{figure}
+
+Diese Beschleunigung lässt sich auf die Signalqualität zurückführen: Das Rauschen der ungefilterten Koordinaten aus Stage 1 zwingt den Regler zu kontinuierlichen, fehlerhaften Mikrokorrekturen, welche die Konvergenz verzögern. Die implementierten Filter liefern hingegen ein derart stabilisiertes Signal, dass der Roboter ohne Verzögerungen und Oszillationen direkt in den Zielkorridor konvergieren kann.
+
+\subsection{Analyse des Roboteraufwands: Trajektorienglättung versus Pfadlänge}
+\label{sec:ergebnisse_robot_effort}
+
+Die Messdaten des Roboteraufwands illustrieren den klassischen regelungstechnischen Trade-off zwischen der Glattheit der Trajektorie (\textit{Smoothness}) und dem kürzesten Weg (\textit{Shortest Path}). Durch den Einsatz der Filter sinkt die mittlere lineare Beschleunigung von 0,0020~m/s\textsuperscript{2} (Stage 1) auf ca. 0,0013 bis 0,0014~m/s\textsuperscript{2} (siehe Abbildung~\ref{fig:a_1_Typ1_mean_ibvs_lin_acc}). Dies entspricht einer Reduktion des Jitters um knapp 35\,\%. Im Gegenzug vergrößert sich die zurückgelegte Pfadlänge marginal von 0,161~m auf ca. 0,170~m (siehe Abbildung~\ref{fig:a_1_Typ1_path_length}). 
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_mean_ibvs_lin_acc.pgf}}
+        \caption{IBVS lineare Beschleunigung}
+        \label{fig:a_1_Typ1_mean_ibvs_lin_acc}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \resizebox{\VarPicWidthA}{!}{\import{Figures/pgf}{a_1_Typ1_path_length.pgf}}
+        \caption{Pfadlänge}
+        \label{fig:a_1_Typ1_path_length}
+    \end{subfigure}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | Vergleich der Trajektorienglättung (IBVS lineare Beschleunigung) und Pfadlänge}
+    \label{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2_path_length}
+\end{figure}
+
+Während Stage 1 mathematisch den kürzesten Weg berechnet, nähert sich das System dem Ziel aufgrund des Messrauschens oszillierend (\enquote{stotternd}) an. Die Kombination aus Zustandsfilterung und \ac{DLS} glättet die Trajektorie. Der Roboter fährt einen um 9\,mm längeren Bogen, schont jedoch durch die stark reduzierte Beschleunigung die mechanischen Gelenke. Zwar bleiben vereinzelte extreme Beschleunigungsspitzen in den Zeitreihen ähnlich (siehe Abbildung~\ref{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2}), das kontinuierliche Grundrauschen der Beschleunigung ist bei den gefilterten Systemen jedoch deutlich reduziert.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\VarPicWidthC}{!}{\import{Figures/pgf}{a_1_Typ1_timeseries_median_ibvs_lin_acc_l2.pgf}}
+    \caption{Level: a | Szen.: 1 | Bauteil: Typ 1 | IBVS Lineare Beschleunigung}
+    \label{fig:a_1_Typ1_timeseries_median_ibvs_lin_acc_l2}
+\end{figure}
+
+\subsection{Fazit und Architekturempfehlung}
+Aus diesen Ergebnissen lässt sich eine Empfehlung ableiten: Selbst unter optimalen Umgebungsbedingungen (Typ 1, Szenario 1) ist mindestens die Architektur der Stage 2 (\ac{EKF}/\ac{ESKF}/\ac{UKF}) der ungefilterten Baseline (Stage 1) vorzuziehen. Das gefilterte System schwingt schneller ein und minimiert die mechanische Belastung des Roboters. Ob die erhöhte Aktivität in Stage 3 zwingend erforderlich ist, wird in den folgenden Abschnitten anhand komplexerer Szenarien evaluiert.
+
+%% End of File %%
+
+
+
+% Hallo, ich benötige deine Hilfe beim Auswerten von Messungen. 
+% Analysiere dazu bitte als erstes das File thesis.pdf. Dies ist unsere aktuelle Projektdokumentation, in dem unter Anderem das Projekt, die Ziele, die Implementierungen sowie der Aufbau der Experimente dokumentiert ist. Gebe bitte bescheid, ob du das File analysieren konntest, oder ob es Probleme dabei gab.
+
+% Außerdem lade ich die das File ModelIBVS_BenchmarkTracking.pdf hoch, in dem die Bezeichnungen und Kombinationen der entsprechenden Messung notiert sind. 
+
+% Ich habe zu jeder Messung folgende Plots (jeweils über die Zeit):
+% - base_ang_acc_l2: Rotatische Beschleunigung (L2-normiert: $\sqrt{\ddot{\alpha}^2 + \ddot{\beta}^2 + \ddot{\gamma}^2}$) der Kamera aus Sicht des base-frames des Roboters.
+% - base_ang_vel_l2: Rotatische Geschwindigkeit (L2-normiert: $\sqrt{\dot{\alpha}^2 + \dot{\beta}^2 + \dot{\gamma}^2}$) der Kamera aus Sicht des base-frames des Roboters.
+% - base_lin_acc_l2: Translatorische Beschleunigung (L2-normiert: $\sqrt{\ddot{x}^2 + \ddot{y}^2 + \ddot{z}^2}$) der Kamera aus Sicht des base-frames des Roboters.
+% - base_lin_vel_l2: Translatorische Geschwindigkeit (L2-normiert: $\sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2}$) der Kamera aus Sicht des base-frames des Roboters.
+% - ibvs_ang_acc_l2: Rotatische Beschleunigung (L2-normiert: $\sqrt{\ddot{\alpha}^2 + \ddot{\beta}^2 + \ddot{\gamma}^2}$) die der IBVS-Controller ausgiebt.
+% - ibvs_ang_vel_l2: Rotatische Geschwindigkeit (L2-normiert: $\sqrt{\dot{\alpha}^2 + \dot{\beta}^2 + \dot{\gamma}^2}$) die der IBVS-Controller ausgiebt.
+% - ibvs_lin_acc_l2: Translatorische Beschleunigung (L2-normiert: $\sqrt{\ddot{x}^2 + \ddot{y}^2 + \ddot{z}^2}$) die der IBVS-Controller ausgiebt.
+% - ibvs_lin_vel_l2: Translatorische Geschwindigkeit (L2-normiert: $\sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2}$) die der IBVS-Controller ausgiebt.
+% - ibvs_rms_px: Der RMS-Fehler der IBVS-Controllers.
+% - path_length: Pfadlänge (als Integration der Geschwindigkeit).
+% - filter_reject_count: Wie oft der Filter eine Messung rejected hat.
+% - local_rescue_attempts_delta: Wie oft der Local Rescue Algorithmus versucht hat einen Punkt zu „retten“.
+% - local_rescue_reject_delta: Wie oft der Local Rescue Versuch einen Punkt zu „retten“ rejected wurde.
+% - local_rescue_success_delta: Wie oft der Local Rescue Versuch einen Punkt zu „retten“ erfolgreich war.
+
+% Da pro Kombination 5 Durchläufe gefahren wurden gibt es noch je einen summary plot mit bar plots von:
+% - success_rate: Ob der run erfolgreich war.
+% - time_to_goal: Wie lange die Fahrt gedauert hat.
+% - mean_ibvs_rms: Mittlerer RMS-Fehler des IBVS-Controllers.
+% - final_path_length: Finale Pfadlänge des runs.
+
+% Des weitere habe ich, um ohne Filter, mit Filter und mit Filter und Local Rescue, sprich die drei Stufen, vergleichen zu können, mir Comparisson Plots erstellt. Diese vergleichen die Läufe/Kombinationen mit gleichem Level, gleichem Szenario und gleichem Bauteil-Typ (und dann bars oder plots für Stage und Filter). 
+% Folgende bar-plots habe ich (pro Stage/Filter einen):
+% - filter_reject_count: Der finale Wert.
+% - local_rescue_success: Der finale Wert.
+% - mean_ibvs_lin_acc (nur die erfolgreichen runs werden betrachtet)
+% - mean_ibvs_lin_vel (nur die erfolgreichen runs werden betrachtet)
+% - mean_ibvs_rms
+% - path_length (nur die erfolgreichen runs werden betrachtet): Der finale Wert.
+% - success_rate: Wie viele der runs erfolgreich waren.
+% Folgende time-plots habe ich, wobei hierfür die einzel-runs per median gemittelt wurden und dann in einen plot zum vergleich (eine line pro Stage/Filter):
+% - timeseries_median_ibvs_lin_acc_l2
+% - timeseries_median_ibvs_lin_vel_l2
+% - timeseries_median_ibvs_rms_px
+% - timeseries_median_path_length
+
+% Bitte verarbeite im ersten Schritt all diese Informationen und analysiere den Kontext.
+% Mein Ziel ist die Erarbeitung einer Strategie für die Auswertung, sprich welche plots, respektive Werte vergleichen wir gegen welche und was für Aussagen können daraus getroffen werden. Ideal wäre am Ende eine Entscheidungsmatrix zu bauen, in der empfohlen wird, bei welchem Bauteil und Szenario welcher FIlter am sinnvollsten ist und ob bspw. local rescue einen Vorteil bringt.
+% Wie würdest du, als Senior Data-Analyst/-Engineer jetzt hier vorgehen?
